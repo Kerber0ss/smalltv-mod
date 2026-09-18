@@ -47,7 +47,8 @@ static bool samePlace(const char* wanted, const char* actual) {
 static uint16_t addCount(uint16_t total, JsonObjectConst t) {
   int n = t["count"] | 1;
   if (n < 1) n = 1;
-  return (uint16_t)min(65535UL, (uint32_t)total + (uint32_t)n);
+  uint32_t sum = (uint32_t)total + (uint32_t)n;
+  return sum > 65535U ? 65535U : (uint16_t)sum;
 }
 
 static bool parseSituation(const Settings& s, Stream& stream) {
