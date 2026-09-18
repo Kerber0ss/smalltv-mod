@@ -7,7 +7,7 @@
 // Firmware identity
 // ---------------------------------------------------------------------------
 #define FW_NAME     "smalltv-mod"
-#define FW_VERSION  "2.16.0"
+#define FW_VERSION  "2.17.0"
 
 // Project / update references (shown in the web UI; used by the GitHub self-update)
 #define REPO_URL      "https://github.com/Kerber0ss/smalltv-mod"
@@ -77,7 +77,7 @@
 // Display mode — what the device shows
 //   0 = stock / crypto ticker (per-symbol source, see SRC_* below)
 //   1 = Claude usage meter (mascot + 5h/7d usage bars, fed by the daemon/)
-//   2 = plane radar
+//   2 = air-alert radar
 //   3 = carousel: rotate through the ticked features on a timer
 // ---------------------------------------------------------------------------
 #define MODE_STOCKS    0
@@ -150,7 +150,6 @@
 // Compile-time feature toggles. All shipping features are on by default; a lean
 // build drops one by setting e.g. -D WITH_RADAR=0 in a PlatformIO env, which
 // omits that feature's module from the registry and its web UI section.
-// (WITH_RADAR ships off until the radar module lands.)
 // ---------------------------------------------------------------------------
 #ifndef WITH_TICKER
 #define WITH_TICKER 1
@@ -226,43 +225,16 @@
 #define CASH_USER_AGENT "Mozilla/5.0 (SmallTV)"
 
 // ---------------------------------------------------------------------------
-// Plane radar (MODE_RADAR)
-//   Data source (radar's own selector, independent of the stock one):
-//     0 = adsb.fi opendata, fetched directly by the device over HTTPS (no key)
-//     1 = custom webhook (a LAN proxy that pre-filters — robust on the ESP8266)
-//     2 = adsb.lol opendata, same JSON shape, also direct over HTTPS (no key)
+// Air-alert radar (MODE_RADAR). The API is region-filtered before it reaches
+// the ESP8266; only the selected region's situation is parsed from its stream.
 // ---------------------------------------------------------------------------
-#define RADAR_SRC_ADSBFI   0
-#define RADAR_SRC_WEBHOOK  1
-#define RADAR_SRC_ADSBLOL  2
-
-// Both free open-data feeds return the same {"ac":[...]} shape and take the
-// same lat/lon/dist-in-nautical-miles path; only host and prefix differ.
-//   adsb.fi:  /api/v3/lat/{lat}/lon/{lon}/dist/{nm}
-//   adsb.lol: /v2/lat/{lat}/lon/{lon}/dist/{nm}
-// Public rate limit is ~1 req/s on both; neither needs an API key.
-#define ADSB_FI_HOST     "opendata.adsb.fi"
-#define ADSB_FI_PATH     "/api/v3/lat/"
-#define ADSB_LOL_HOST    "api.adsb.lol"
-#define ADSB_LOL_PATH    "/v2/lat/"
-#define ADSB_USER_AGENT  "Mozilla/5.0 (SmallTV)"
-
-// Default direct provider. adsb.fi sits behind Cloudflare, which does not
-// negotiate the TLS max_fragment_length extension and sends records larger
-// than BearSSL's fallback 4 KB buffer, so it cannot read a busy response;
-// adsb.lol still honours MFLN and keeps the TLS footprint tiny.
-#define DEFAULT_RADAR_SRC  RADAR_SRC_ADSBLOL
-
-// Bound RAM: nearest N aircraft kept/drawn, and a few home-area airports.
-#define MAX_AIRCRAFT     24
-#define MAX_AIRPORTS      6
-#define MAX_ICAO_LEN      8      // ICAO ident + NUL (e.g. "LSZH")
-
-// Defaults (lat/lon 0,0 is the "not set yet" sentinel -> shows a prompt).
-#define DEFAULT_RADAR_LAT       0.0f
-#define DEFAULT_RADAR_LON       0.0f
-#define DEFAULT_RADAR_RANGE_KM  20
-#define DEFAULT_RADAR_POLL_SEC  10     // >=3 keeps us under the 1 req/s limit
+#define RADAR_API_URL          "https://radar.syslog.pp.ua/v1/situation?region="
+#define RADAR_TLS_RXBUF        4096
+#define RADAR_TLS_MIN_BLOCK    16000
+#define MAX_RADAR_REGION_LEN   24
+#define MAX_RADAR_LOCATION_LEN 48
+#define DEFAULT_RADAR_REGION   ""
+#define DEFAULT_RADAR_POLL_SEC 30
 
 // ---------------------------------------------------------------------------
 // Defaults (used on first boot / factory reset)

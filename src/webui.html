@@ -233,47 +233,23 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
 
  <!-- RADAR (feature) -->
  <section id="radar" class="tab">
-  <div class="card"><h2>Home location</h2>
-   <div class="row">
-    <div><label>Latitude</label><input id="radarLat" type="number" step="0.0001" placeholder="52.3676"></div>
-    <div><label>Longitude</label><input id="radarLon" type="number" step="0.0001" placeholder="4.9041"></div>
-   </div>
-   <small class="hint">The radar centres on this point. Decimal degrees, e.g. <code>52.3676</code>, <code>4.9041</code>. Leave at 0/0 and the screen prompts you to set it.</small>
-  </div>
-  <div class="card"><h2>Range &amp; data</h2>
-   <div class="row">
-    <div><label>Range</label>
-     <select id="rangeKm"><option value="5">5</option><option value="10">10</option>
-      <option value="15">15</option><option value="20">20</option><option value="25">25</option>
-      <option value="50">50</option></select></div>
-    <div><label>Units</label>
-     <select id="unitsMi"><option value="false">km</option><option value="true">mi</option></select></div>
-    <div><label>Refresh (s)</label><input id="radarPollSec" type="number" min="3" max="3600"></div>
-   </div>
-   <label>Data source</label>
-   <select id="radarSource" onchange="radarSrcChanged()">
-    <option value="adsblol">adsb.lol (direct, no server)</option>
-    <option value="adsbfi">adsb.fi (direct, no server)</option>
-    <option value="webhook">Custom webhook (LAN proxy)</option>
+  <div class="card"><h2>Location</h2>
+   <label>Region</label>
+   <select id="radarRegion">
+    <option value="">Choose a region</option>
+    <option value="cherkaska">Cherkasy</option><option value="chernihivska">Chernihiv</option><option value="chernivetska">Chernivtsi</option><option value="crimea">Crimea</option><option value="dnipropetrovska">Dnipro</option><option value="donetska">Donetsk</option><option value="ivano-frankivska">Ivano-Frankivsk</option><option value="kharkivska">Kharkiv</option><option value="khersonska">Kherson</option><option value="khmelnytska">Khmelnytskyi</option><option value="kirovohradska">Kirovohrad</option><option value="kyiv-city">Kyiv city</option><option value="kyivska">Kyiv region</option><option value="luhanska">Luhansk</option><option value="lvivska">Lviv</option><option value="mykolaivska">Mykolaiv</option><option value="odeska">Odesa</option><option value="poltavska">Poltava</option><option value="rivnenska">Rivne</option><option value="sevastopol">Sevastopol</option><option value="sumska">Sumy</option><option value="ternopilska">Ternopil</option><option value="vinnytska">Vinnytsia</option><option value="volynska">Volyn</option><option value="zakarpatska">Zakarpattia</option><option value="zaporizka">Zaporizhzhia</option><option value="zhytomyrska">Zhytomyr</option>
    </select>
-   <div id="radarWebhookRow"><label>Webhook URL</label>
-    <input id="radarWebhookUrl" type="url" placeholder="http://n8n.local:5678/webhook/radar"></div>
-   <small class="hint" id="radarSrcHint"></small>
+   <div class="row">
+    <div><label>District <span class="muted">(optional)</span></label><input id="radarDistrict" type="text" placeholder="Odeskyi raion"></div>
+    <div><label>City <span class="muted">(optional)</span></label><input id="radarLocality" type="text" placeholder="Odesa"></div>
+   </div>
+   <label>Display alerts and targets for</label>
+   <select id="radarScope"><option value="region">Whole region</option><option value="local">Selected district or city</option></select>
+   <small class="hint">For a district/city view, enter the place exactly as it appears in the Radar data. A regional alert stays red for every place; district-only alerts turn red only for the selected district.</small>
   </div>
-  <div class="card"><h2>What to show</h2>
-   <label>Marker &amp; label size</label>
-   <select id="radarUiScale"><option value="0">Small</option><option value="1">Medium</option><option value="2">Large</option></select>
-   <label style="margin-top:12px">Hide aircraft below (ft, 0 = show all)</label>
-   <input id="radarMinAlt" type="number" min="0" max="60000" step="100">
-   <small class="hint">Drops ground traffic (parked/taxiing) and low flights. Try <code>500</code> to hide anything on or near the ground.</small>
-   <div class="chk" style="margin-top:12px"><input id="showLabels" type="checkbox"><label>Callsign &amp; altitude labels</label></div>
-   <div class="chk"><input id="showVectors" type="checkbox"><label>Speed / heading vectors</label></div>
-   <div class="chk"><input id="showRimDots" type="checkbox"><label>Off-screen traffic dots on the rim</label></div>
-  </div>
-  <div class="card"><h2>Airports</h2>
-   <table id="apTable"></table>
-   <button class="btn sec" style="margin-top:10px" onclick="addAp()">+ Add airport</button>
-   <small class="hint">A few home-area airports drawn as markers. ICAO code (e.g. <code>LSZH</code>) and its lat/lon. Up to 6.</small>
+  <div class="card"><h2>Data</h2>
+   <label>Refresh (seconds)</label><input id="radarPollSec" type="number" min="10" max="3600">
+   <small class="hint">Uses <code>radar.syslog.pp.ua</code> over HTTPS. The screen shows green when clear, yellow for live targets, and red for an official air alert. Drones and missiles remain visible in large type.</small>
   </div>
  </section>
 
@@ -463,21 +439,9 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
  sc('codexEnabled',!!u.codexEnabled);
  // radar slice
  var r=c.radar||{};
- sv('radarLat',r.lat); sv('radarLon',r.lon);
- // An imported config can carry any range from 1 to 500, and a value the list
- // does not offer would leave the select blank. Add it rather than lose it.
- var _rk=r.rangeKm||20, _rs=$('rangeKm');
- if(_rs&&!_rs.querySelector('option[value="'+_rk+'"]')){var _ro=document.createElement('option');
-  _ro.value=_rk;_ro.textContent=_rk;_rs.appendChild(_ro);}
- sv('rangeKm',_rk);
- sv('unitsMi',r.unitsMi?'true':'false');
+ sv('radarRegion',r.region||''); sv('radarDistrict',r.district||''); sv('radarLocality',r.locality||'');
+ sv('radarScope',r.localScope?'local':'region');
  sv('radarPollSec',r.pollSec);
- sv('radarSource',r.source||'adsblol'); radarSrcChanged();
- sv('radarWebhookUrl',r.webhookUrl);
- sc('showLabels',r.showLabels); sc('showVectors',r.showVectors); sc('showRimDots',r.showRimDots);
- sv('radarUiScale',r.uiScale!=null?r.uiScale:1);
- sv('radarMinAlt',r.minAltFt!=null?r.minAltFt:0);
- renderAps(r.airports||[]);
  var au=c.auth||{};
  sc('authEnabled',!!au.enabled); sv('authUser',au.user||'admin');
  var apw=$('authPass'); if(apw){apw.value='';apw.placeholder=au.passSet?'(unchanged)':'set a password';}
@@ -522,13 +486,6 @@ function cashPick(k){var rows=document.querySelectorAll('#symTable tr');var tr=n
  if(!tr){if(rows.length>=8){toast('Max 8');return}addRow({});tr=$('symTable').lastChild}
  tr.querySelector('.s').value=k;tr.querySelector('.src').value='cash';symHintFor('cash');
  toast('Added '+k+'. Set a name, then Save.');}
-function radarSrcChanged(){if(!$('radarSource'))return;var v=$('radarSource').value;
- $('radarWebhookRow').style.display=(v==='webhook')?'block':'none';
- $('radarSrcHint').innerHTML=
-  (v==='adsblol')?'The device fetches <b>adsb.lol</b> directly over HTTPS (no key, ~1 req/s). Recommended on the ESP8266: adsb.lol negotiates a small TLS record size, so the handshake fits in RAM.'
- :(v==='adsbfi') ?'The device fetches <b>adsb.fi</b> directly over HTTPS (no key, ~1 req/s), but its TLS records are too large for this ESP8266. Pick adsb.lol or the webhook instead.'
- :'The device requests <code>?lat=..&amp;lon=..&amp;dist=..</code> from your LAN proxy, which pre-filters the feed to a small JSON. Most reliable on the ESP8266.';}
-
 function collect(){
  var o={mode:gv('mode'),
   carouselSec:parseInt(gv('carouselSec'))||30,
@@ -580,18 +537,8 @@ function collect(){
   nightEnd:gv('nightEnd')||'07:00',nightLevel:parseInt(gv('nightLevel'))||0};}
  // radar slice
  if($('radar')){
-  var r={lat:parseFloat(gv('radarLat'))||0, lon:parseFloat(gv('radarLon'))||0,
-   rangeKm:parseInt(gv('rangeKm'))||20, unitsMi:gv('unitsMi')==='true',
-   pollSec:parseInt(gv('radarPollSec'))||0, source:gv('radarSource'),
-   webhookUrl:gv('radarWebhookUrl'),
-   showLabels:gc('showLabels'), showVectors:gc('showVectors'), showRimDots:gc('showRimDots'),
-   uiScale:parseInt(gv('radarUiScale'))||0, minAltFt:parseInt(gv('radarMinAlt'))||0};
-  r.airports=[];
-  document.querySelectorAll('#apTable tr').forEach(function(tr){
-   var ic=tr.querySelector('.ai').value.trim();
-   if(ic)r.airports.push({icao:ic,lat:parseFloat(tr.querySelector('.ala').value)||0,lon:parseFloat(tr.querySelector('.alo').value)||0});
-  });
-  o.radar=r;
+  o.radar={region:gv('radarRegion'),district:gv('radarDistrict').trim(),locality:gv('radarLocality').trim(),
+   localScope:gv('radarScope')==='local',pollSec:parseInt(gv('radarPollSec'))||30};
  }
  return o;
 }
@@ -635,16 +582,6 @@ function addRow(o){var t=$('symTable');var tr=document.createElement('tr');tr.cl
  t.appendChild(tr);}
 function addSym(){if(document.querySelectorAll('#symTable tr').length>=8){toast('Max 8');return}addRow({})}
 
-// airports
-function renderAps(arr){var t=$('apTable');if(!t)return;t.innerHTML='';arr.forEach(addApRow);if(!arr.length)addApRow({})}
-function addApRow(o){var t=$('apTable');var tr=document.createElement('tr');tr.className='symrow';
- tr.innerHTML='<td style="width:30%"><input class="ai" type="text" placeholder="LSZH" value="'+(o.icao||'')+'"></td>'+
-  '<td><input class="ala" type="number" step="0.0001" placeholder="lat" value="'+(o.lat!=null?o.lat:'')+'"></td>'+
-  '<td><input class="alo" type="number" step="0.0001" placeholder="lon" value="'+(o.lon!=null?o.lon:'')+'"></td>'+
-  '<td style="width:34px"><button class="btn sec" style="padding:6px 10px" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
- t.appendChild(tr);}
-function addAp(){if(document.querySelectorAll('#apTable tr').length>=6){toast('Max 6');return}addApRow({})}
-
 // wifi scan
 function scan(){$('scanList').innerHTML='<div class="muted">Scanning...</div>';
  j('/api/scan').then(function(l){var h='';l.sort(function(a,b){return b.rssi-a.rssi});
@@ -683,21 +620,12 @@ function loadStatus(){j('/api/status').then(function(s){
  tb.innerHTML=h||'<span class="muted">No tickers configured</span>';}
 })}
 function kv(k,v){return '<div class="kv"><span class="muted">'+k+'</span><b>'+v+'</b></div>'}
-// The handshake age is measured against the browser's clock, which is the one
-// we can trust to be right.
-// One line saying what the last radar poll actually did. An empty scope looks
-// the same whether the device was refused, got no answer, or filtered every
-// aircraft out, so name the stage and carry the numbers that separate them.
 function radarLine(r){
  if(!r)return '';
- var t=r.stage||'idle';
- if(r.count)t=r.count+' aircraft';
- else if(r.stage==='ok'||r.stage==='all filtered out')t=r.stage+' ('+(r.seenAc||0)+' in feed)';
- if(r.http)t+=', HTTP '+r.http;
- if(r.tlsRx)t+=', TLS rx '+r.tlsRx+' B';
+ var t=r.place?(r.level+' · '+r.place+' · '+(r.drones||0)+' drones, '+(r.missiles||0)+' rockets'):(r.stage||'idle');
+ if(r.http&&r.error)t+=', HTTP '+r.http;
  if(r.triedAgo!=null)t+=', tried '+r.triedAgo+'s ago';
  if(r.okAgo!=null)t+=', last ok '+r.okAgo+'s ago';
- else if(r.stage!=='idle')t+=', never succeeded';
  return t;
 }
 

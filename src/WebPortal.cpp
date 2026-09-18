@@ -133,19 +133,20 @@ static void handleStatus() {
 #endif
 
 #if WITH_RADAR
-  // An empty scope has several possible causes and the screen shows the same
-  // thing for all of them, so report the last poll's actual outcome.
   {
     JsonObject r = o["radar"].to<JsonObject>();
-    r["count"] = radarCount();          // aircraft currently plotted
     r["error"] = radarError();
-    r["stage"] = radarStageName();      // why the last poll produced what it did
-    r["seenAc"] = radarSeenAc();        // aircraft in the last parsed response
-    if (radarLastHttp()) r["http"] = radarLastHttp();   // <0 = HTTPClient internal error
-    if (radarTlsRx())    r["tlsRx"] = radarTlsRx();     // negotiated BearSSL rx buffer
+    r["stage"] = radarStageName();
+    const RadarSituation& d = radarSituation();
+    if (d.valid) {
+      r["place"] = d.placeName;
+      r["drones"] = d.drones;
+      r["missiles"] = d.missiles;
+      r["level"] = d.level == 2 ? "red" : d.level == 1 ? "yellow" : "green";
+    }
+    if (radarLastHttp()) r["http"] = radarLastHttp();
     if (radarLastTryMs()) r["triedAgo"] = (millis() - radarLastTryMs()) / 1000;
     if (radarLastOkMs())  r["okAgo"]    = (millis() - radarLastOkMs()) / 1000;
-    if (radarLastUrl().length()) r["url"] = radarLastUrl();
   }
 #endif
 

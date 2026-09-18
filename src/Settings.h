@@ -19,12 +19,6 @@ struct SymbolCfg {
   float   cost;       // cost basis per unit, in the instrument's currency
 };
 
-// A home-area airport marker (radar feature), configured in the web UI.
-struct Airport {
-  char  icao[MAX_ICAO_LEN];
-  float lat, lon;
-};
-
 // One saved WiFi station network. The device keeps up to MAX_WIFI_NETS and
 // joins the strongest visible one at boot (hidden SSIDs are tried last).
 struct WifiCred {
@@ -136,24 +130,13 @@ struct HaSettings {
   void fromJson(JsonObjectConst o);
 };
 
-// ---- Plane radar feature slice --------------------------------------------
+// ---- Air-alert radar feature slice ----------------------------------------
 struct RadarSettings {
-  float    lat;           // home latitude  (0,0 = not set yet)
-  float    lon;           // home longitude
-  uint8_t  source;        // RADAR_SRC_ADSBFI, RADAR_SRC_ADSBLOL or RADAR_SRC_WEBHOOK
-  String   webhookUrl;    // LAN proxy base URL (when source=webhook)
-  uint16_t rangeKm;       // outer ring radius
-  uint16_t pollSec;       // refresh period
-  bool     unitsMi;       // show distances in miles instead of km
-
-  bool     showLabels;    // callsign + altitude next to each aircraft
-  bool     showVectors;   // speed/heading vector line
-  bool     showRimDots;   // aircraft beyond the ring as bearing dots on the rim
-  uint8_t  uiScale;       // marker/text size: 0 = small, 1 = medium, 2 = large
-  uint16_t minAltFt;      // hide aircraft below this altitude (ft); 0 = show all
-
-  Airport airports[MAX_AIRPORTS];
-  uint8_t airportCount;
+  char     region[MAX_RADAR_REGION_LEN];      // API region key, empty = not configured
+  char     district[MAX_RADAR_LOCATION_LEN];  // optional district name
+  char     locality[MAX_RADAR_LOCATION_LEN];  // optional city/locality name
+  bool     localScope;                        // false = whole region; true = selected place
+  uint16_t pollSec;                           // refresh period
 
   void setDefaults();
   void toJson(JsonObject o) const;

@@ -4,7 +4,7 @@
 // web UI and dispatched from the registry below:
 //   - Ticker (features/ticker):  stock/crypto price, % change, sparkline.
 //   - Usage  (features/usage):   Claude 5h/7d usage bars + animated mascot.
-//   - Radar  (features/radar):   live ADS-B plane radar (compiled in when WITH_RADAR).
+//   - Radar  (features/radar):   live regional air-alert status.
 // Shared plumbing (WiFi, web UI, OTA, display core, settings) lives at src root.
 //
 // License: WTFPL

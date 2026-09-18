@@ -293,86 +293,27 @@ void HaSettings::fromJson(JsonObjectConst o) {
 // Radar slice
 // ===========================================================================
 void RadarSettings::setDefaults() {
-  lat = DEFAULT_RADAR_LAT;
-  lon = DEFAULT_RADAR_LON;
-  source = DEFAULT_RADAR_SRC;
-  webhookUrl = "";
-  rangeKm = DEFAULT_RADAR_RANGE_KM;
+  strlcpy(region, DEFAULT_RADAR_REGION, sizeof(region));
+  district[0] = 0;
+  locality[0] = 0;
+  localScope = false;
   pollSec = DEFAULT_RADAR_POLL_SEC;
-  unitsMi = false;
-  showLabels = true;
-  showVectors = true;
-  showRimDots = true;
-  uiScale = 1;            // medium
-  minAltFt = 0;           // show all
-  airportCount = 0;
-  for (uint8_t i = 0; i < MAX_AIRPORTS; i++) {
-    airports[i].icao[0] = 0;
-    airports[i].lat = airports[i].lon = 0;
-  }
 }
 
 void RadarSettings::toJson(JsonObject o) const {
-  o["lat"]         = lat;
-  o["lon"]         = lon;
-  o["source"]      = (source == RADAR_SRC_WEBHOOK) ? "webhook"
-                   : (source == RADAR_SRC_ADSBLOL) ? "adsblol" : "adsbfi";
-  o["webhookUrl"]  = webhookUrl;
-  o["rangeKm"]     = rangeKm;
+  o["region"]      = region;
+  o["district"]    = district;
+  o["locality"]    = locality;
+  o["localScope"]  = localScope;
   o["pollSec"]     = pollSec;
-  o["unitsMi"]     = unitsMi;
-  o["showLabels"]  = showLabels;
-  o["showVectors"] = showVectors;
-  o["showRimDots"] = showRimDots;
-  o["uiScale"]     = uiScale;
-  o["minAltFt"]    = minAltFt;
-
-  JsonArray arr = o["airports"].to<JsonArray>();
-  for (uint8_t i = 0; i < airportCount; i++) {
-    JsonObject e = arr.add<JsonObject>();
-    e["icao"] = airports[i].icao;
-    e["lat"]  = airports[i].lat;
-    e["lon"]  = airports[i].lon;
-  }
 }
 
 void RadarSettings::fromJson(JsonObjectConst o) {
-  if (o["lat"].is<float>() || o["lat"].is<int>()) lat = o["lat"].as<float>();
-  if (o["lon"].is<float>() || o["lon"].is<int>()) lon = o["lon"].as<float>();
-  if (o["source"].is<const char*>()) {
-    String src = o["source"].as<String>();
-    // "direct" is the pre-2.11 name for "whichever direct feed we default to".
-    // Configs written back then predate the adsb.fi Cloudflare move, so they
-    // resolve to the platform default rather than pinning adsb.fi.
-    if      (src.equalsIgnoreCase("webhook")) source = RADAR_SRC_WEBHOOK;
-    else if (src.equalsIgnoreCase("adsblol")) source = RADAR_SRC_ADSBLOL;
-    else if (src.equalsIgnoreCase("adsbfi"))  source = RADAR_SRC_ADSBFI;
-    else                                      source = DEFAULT_RADAR_SRC;
-  }
-  if (o["webhookUrl"].is<const char*>()) webhookUrl = o["webhookUrl"].as<String>();
-  if (o["rangeKm"].is<int>())    rangeKm = constrain((int)o["rangeKm"], 1, 500);
-  if (o["pollSec"].is<int>())    pollSec = constrain((int)o["pollSec"], 3, 3600);
-  if (o["unitsMi"].is<bool>())   unitsMi = o["unitsMi"];
-  if (o["showLabels"].is<bool>())  showLabels = o["showLabels"];
-  if (o["showVectors"].is<bool>()) showVectors = o["showVectors"];
-  if (o["showRimDots"].is<bool>()) showRimDots = o["showRimDots"];
-  if (o["uiScale"].is<int>())      uiScale = constrain((int)o["uiScale"], 0, 2);
-  if (o["minAltFt"].is<int>())     minAltFt = constrain((int)o["minAltFt"], 0, 60000);
-
-  if (o["airports"].is<JsonArrayConst>()) {
-    JsonArrayConst arr = o["airports"].as<JsonArrayConst>();
-    airportCount = 0;
-    for (JsonObjectConst e : arr) {
-      if (airportCount >= MAX_AIRPORTS) break;
-      const char* ic = e["icao"] | "";
-      if (!ic[0]) continue;                  // skip blank rows
-      Airport& dst = airports[airportCount];
-      strlcpy(dst.icao, ic, MAX_ICAO_LEN);
-      dst.lat = e["lat"].as<float>();
-      dst.lon = e["lon"].as<float>();
-      airportCount++;
-    }
-  }
+  if (o["region"].is<const char*>()) strlcpy(region, o["region"], sizeof(region));
+  if (o["district"].is<const char*>()) strlcpy(district, o["district"], sizeof(district));
+  if (o["locality"].is<const char*>()) strlcpy(locality, o["locality"], sizeof(locality));
+  if (o["localScope"].is<bool>()) localScope = o["localScope"];
+  if (o["pollSec"].is<int>()) pollSec = constrain((int)o["pollSec"], 10, 3600);
 }
 
 // ===========================================================================

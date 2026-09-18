@@ -1,32 +1,21 @@
-// RadarMode.h — live ADS-B plane radar feature.
-//
-// Draws a PPI-style radar centred on the configured home lat/lon: range rings,
-// aircraft as heading triangles with speed vectors and callsign/altitude labels,
-// off-screen traffic as bearing dots on the rim, plus a few home-area airports.
-// Owns its fetch (RadarClient) and its render/dirty state.
-//
-// The sonar-style ADS-B presentation uses heading triangles, vectors, labels,
-// and rim dots adapted for the square SmallTV display.
+// RadarMode.h — readable 240px air-alert screen.
 #pragma once
 #include "Mode.h"
-#include "config.h"
 
 class RadarMode : public DisplayMode {
  public:
   const char* id() const override { return "radar"; }
-  uint8_t     modeConst() const override { return MODE_RADAR; }
-
+  uint8_t modeConst() const override { return MODE_RADAR; }
   void begin(const Settings& s) override;
   void service(const Settings& s) override;
   void invalidate(const Settings& s) override;
-  void wake(const Settings& s) override { needRender_ = true; }  // repaint only
+  void wake(const Settings& s) override { dirty_ = true; }
 
  private:
   void render(const Settings& s);
-
   uint32_t renderedOk_ = 0xFFFFFFFF;
-  bool     renderedError_ = false;
-  bool     needRender_ = true;
+  bool renderedError_ = false;
+  bool dirty_ = true;
 };
 
 extern RadarMode g_radarMode;
