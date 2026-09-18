@@ -62,10 +62,13 @@ struct TickerSettings {
   void fromJson(JsonObjectConst o);   // applies only the keys present
 };
 
-// ---- Claude usage feature slice -------------------------------------------
+// ---- Usage feature slice ---------------------------------------------------
 struct UsageSettings {
-  String   usageUrl;      // daemon HTTP endpoint, e.g. http://192.168.1.10:8787/
-  uint16_t pollSec;       // refresh period
+  String   usageUrl;        // optional Claude daemon HTTP endpoint
+  uint16_t pollSec;         // Claude pull refresh period
+  uint16_t rotateSec;       // dwell when both screens are enabled
+  bool     claudeEnabled;
+  bool     codexEnabled;
 
   void setDefaults();
   void toJson(JsonObject o) const;

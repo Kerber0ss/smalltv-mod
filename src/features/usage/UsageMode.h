@@ -1,4 +1,4 @@
-// UsageMode.h — Claude usage meter feature.
+// UsageMode.h — Claude and Codex usage meter feature.
 //
 // Shows 5h/7d usage bars + a small mascot when data is flowing, and an animated
 // pixel-art mascot when the daemon goes quiet. Owns its fetch (UsageClient), its
@@ -23,6 +23,7 @@ class UsageMode : public DisplayMode {
  private:
   bool contentChanged(const UsageData& u) const;
   void rememberContent(const UsageData& u);
+  void selectSource(const Settings& s);
 
   uint32_t usageSampled_ = 0;              // lastOkMs already fed to the mascot tracker
   uint32_t usageRenderedOk_ = 0xFFFFFFFF;
@@ -44,6 +45,9 @@ class UsageMode : public DisplayMode {
   char     lastSource_[12] = {0};
   bool     lastValid_ = false;
   bool     lastError_ = false;
+  UsageSource source_ = USAGE_CLAUDE;
+  uint32_t sourceSince_ = 0;
+  bool     showingDisabled_ = false;
 };
 
 extern UsageMode g_usageMode;

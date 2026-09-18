@@ -3,13 +3,13 @@ title: Codex usage meter
 description: Show your Codex 5-hour and weekly usage limits on SmallTV, from a Mac.
 ---
 
-This reuses the existing **Clawdmeter** display mode. With the macOS client running, its title changes to **CODEX** and shows the current five-hour and weekly windows with countdowns to their resets.
+This uses the **Usage metrics** display mode. It is a separate **CODEX** screen, with its own latest reading; it no longer overwrites the Claude screen.
 
 The client uses the locally signed-in Codex CLI's App Server. It reads the same rate-limit snapshot used by Codex; it does not read, copy, or send an OAuth token. Only the percentages, reset times, and status are sent to the SmallTV over your LAN.
 
 ## Setup
 
-1. Flash this firmware, open **Display → Mode**, and select **Clawdmeter**. Leave **Usage daemon URL** blank because the Mac pushes directly to the device.
+1. Flash this firmware, open **Display → Mode**, and select **Usage metrics**. In **Usage metrics**, enable **Show CODEX metrics**. Leave **Claude daemon URL** blank because the Mac pushes directly to the device. Enable both checkboxes and set **Switch screens every** to alternate Claude and CODEX.
 2. On the Mac where Codex is signed in, run:
 
    ```sh

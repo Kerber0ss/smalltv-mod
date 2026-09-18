@@ -2,7 +2,7 @@
 
 `codex_meter.py` reads the signed-in local Codex account through `codex app-server` and POSTs the five-hour and weekly usage windows to one or more SmallTV devices. It uses only Python's standard library. The device receives percentages, reset countdowns, and a status; no Codex token leaves the Mac.
 
-1. Flash this firmware and select **Display → Mode → Clawdmeter** on the SmallTV. Leave **Usage daemon URL** empty: this client pushes directly to the device.
+1. Flash this firmware and select **Display → Mode → Usage metrics** on the SmallTV. In the **Usage metrics** tab, enable **Show CODEX metrics**. Leave **Claude daemon URL** empty: this client pushes directly to the device.
 2. Confirm the local conversion without sending anything:
 
    ```sh

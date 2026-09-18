@@ -3,24 +3,29 @@
 #include <ArduinoJson.h>
 #include <math.h>
 
-static UsageData g_usage;
+static UsageData g_claude;
+static UsageData g_codex;
 static uint32_t  g_nextPollMs = 0;
 static bool      g_inited = false;
 
 // ---------------------------------------------------------------------------
 void usageInit(const Settings& s) {
   (void)s;
-  g_usage.clear();
+  g_claude.clear();
+  g_codex.clear();
   g_nextPollMs = millis();
   g_inited = true;
 }
 
 void usageForceRefresh() { g_nextPollMs = millis(); }
 
-const UsageData& usageGet() { return g_usage; }
+const UsageData& usageGet(UsageSource source) {
+  return source == USAGE_CODEX ? g_codex : g_claude;
+}
 
-bool usageFresh(uint32_t withinMs) {
-  return g_usage.valid && (millis() - g_usage.lastOkMs) <= withinMs;
+bool usageFresh(UsageSource source, uint32_t withinMs) {
+  const UsageData& d = usageGet(source);
+  return d.valid && (millis() - d.lastOkMs) <= withinMs;
 }
 
 // ---- parse: usage contract -------------------------------------------------
@@ -31,6 +36,11 @@ bool usageFresh(uint32_t withinMs) {
 static void usageFilter(JsonDocument& f) {
   f["s"] = true; f["sr"] = true; f["w"] = true;
   f["wr"] = true; f["st"] = true; f["src"] = true; f["ok"] = true;
+}
+
+static UsageSource sourceFromDoc(JsonDocument& doc) {
+  const char* source = doc["src"] | "";
+  return !strcmp(source, "codex") ? USAGE_CODEX : USAGE_CLAUDE;
 }
 
 static bool applyUsageDoc(UsageData& d, JsonDocument& doc) {
@@ -62,7 +72,7 @@ bool usageApply(const String& body) {
   JsonDocument filter; usageFilter(filter);
   JsonDocument doc;
   if (deserializeJson(doc, body, DeserializationOption::Filter(filter))) return false;
-  return applyUsageDoc(g_usage, doc);
+  return applyUsageDoc(sourceFromDoc(doc) == USAGE_CODEX ? g_codex : g_claude, doc);
 }
 
 // ---- one HTTP(S) GET + parse (mirrors StockClient::fetchUrl) ----------------
@@ -88,7 +98,7 @@ static bool fetchUsage(const Settings& s) {
   int code = http.GET();
   if (code != HTTP_CODE_OK) { http.end(); return false; }
 
-  bool ok = parseUsage(g_usage, http.getStream());
+  bool ok = parseUsage(g_claude, http.getStream());
   http.end();
   return ok;
 }
@@ -98,7 +108,7 @@ void usageService(const Settings& s) {
   if (!g_inited) usageInit(s);
   if ((int32_t)(millis() - g_nextPollMs) < 0) return;
 
-  if (!fetchUsage(s)) g_usage.error = true;   // keep stale data, flag the error
+  if (!fetchUsage(s)) g_claude.error = true;   // keep stale data, flag the error
 
   g_nextPollMs = millis() + (uint32_t)s.usage.pollSec * 1000UL;
 }

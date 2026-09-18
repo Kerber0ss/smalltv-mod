@@ -204,6 +204,9 @@ void UsageMode::begin(const Settings& s) {
   needRender_ = true;
   contentPrimed_ = false;
   layoutPrimed_ = false;
+  source_ = s.usage.codexEnabled && !s.usage.claudeEnabled ? USAGE_CODEX : USAGE_CLAUDE;
+  sourceSince_ = millis();
+  showingDisabled_ = false;
 }
 
 void UsageMode::invalidate(const Settings& s) {
@@ -212,17 +215,52 @@ void UsageMode::invalidate(const Settings& s) {
   usageRenderedOk_ = 0xFFFFFFFF;
   contentPrimed_ = false;
   layoutPrimed_ = false;
+  source_ = s.usage.codexEnabled && !s.usage.claudeEnabled ? USAGE_CODEX : USAGE_CLAUDE;
+  sourceSince_ = millis();
+  showingDisabled_ = false;
   usageInit(s);
   usageForceRefresh();
+}
+
+void UsageMode::selectSource(const Settings& s) {
+  const bool claude = s.usage.claudeEnabled;
+  const bool codex = s.usage.codexEnabled;
+  if (!claude && !codex) return;
+
+  UsageSource wanted = source_;
+  if (source_ == USAGE_CLAUDE && !claude) wanted = USAGE_CODEX;
+  else if (source_ == USAGE_CODEX && !codex) wanted = USAGE_CLAUDE;
+  else if (claude && codex && millis() - sourceSince_ >= (uint32_t)s.usage.rotateSec * 1000UL)
+    wanted = source_ == USAGE_CLAUDE ? USAGE_CODEX : USAGE_CLAUDE;
+  if (wanted == source_) return;
+
+  source_ = wanted;
+  sourceSince_ = millis();
+  usageSampled_ = 0;
+  usageRenderedOk_ = 0xFFFFFFFF;
+  showingMascot_ = false;
+  contentPrimed_ = false;
+  layoutPrimed_ = false;
+  needRender_ = true;
+  mascotReset();
 }
 
 void UsageMode::service(const Settings& s) {
   // Pull mode: poll the daemon when a Usage URL is set. Push mode: leave it blank
   // and the daemon POSTs to /api/usage (for networks where the device can't reach
   // the PC). Either way usageGet() drives the render below.
-  if (s.usage.usageUrl.length() >= 8) usageService(s);
+  if (!s.usage.claudeEnabled && !s.usage.codexEnabled) {
+    if (!showingDisabled_) {
+      gfxMessage("Usage screens off", "Enable them in Web UI", C_YELLOW);
+      showingDisabled_ = true;
+    }
+    return;
+  }
+  showingDisabled_ = false;
+  if (s.usage.claudeEnabled && s.usage.usageUrl.length() >= 8) usageService(s);
+  selectSource(s);
 
-  const UsageData& u = usageGet();
+  const UsageData& u = usageGet(source_);
 
   // Feed the burn-rate tracker once per fresh reading (drives the mascot's mood).
   if (u.valid && u.lastOkMs != usageSampled_) {
@@ -233,7 +271,7 @@ void UsageMode::service(const Settings& s) {
   // Considered stale after ~2 missed polls (plus a grace) — then show the animation.
   uint32_t staleMs = (uint32_t)s.usage.pollSec * 1000UL * 2UL + USAGE_STALE_GRACE_MS;
 
-  if (usageFresh(staleMs)) {
+  if (usageFresh(source_, staleMs)) {
     bool fullRepaint = !layoutPrimed_;
     if (showingMascot_) { showingMascot_ = false; needRender_ = true; fullRepaint = true; }
     if (u.lastOkMs != usageRenderedOk_) {

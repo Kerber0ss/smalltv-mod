@@ -10,8 +10,8 @@
 void usageInit(const Settings& s);
 void usageService(const Settings& s);     // call each loop; fetches on the poll schedule
 void usageForceRefresh();                 // poll again on the next service() call
-const UsageData& usageGet();
-bool usageFresh(uint32_t withinMs);       // true if the last good update is recent enough
+const UsageData& usageGet(UsageSource source);
+bool usageFresh(UsageSource source, uint32_t withinMs);  // true if that source is fresh
 
 // Apply a usage payload PUSHED to the device (POST /api/usage) — used when the
 // device can't reach the daemon (Wi-Fi client isolation) so the daemon pushes.

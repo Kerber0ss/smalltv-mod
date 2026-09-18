@@ -1,4 +1,4 @@
-// UsageData.h — runtime (volatile) Claude usage snapshot from the daemon.
+// UsageData.h — runtime snapshots supplied by the Claude daemon or Codex meter.
 #pragma once
 #include <Arduino.h>
 
@@ -26,3 +26,5 @@ struct UsageData {
     lastOkMs = 0;
   }
 };
+
+enum UsageSource : uint8_t { USAGE_CLAUDE, USAGE_CODEX };

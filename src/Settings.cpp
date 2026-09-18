@@ -126,16 +126,25 @@ void TickerSettings::fromJson(JsonObjectConst o) {
 void UsageSettings::setDefaults() {
   usageUrl = "";
   pollSec = DEFAULT_POLL_SEC;
+  rotateSec = 30;
+  claudeEnabled = true;
+  codexEnabled = false;  // preserves the old single-Claude-screen behaviour on upgrade
 }
 
 void UsageSettings::toJson(JsonObject o) const {
-  o["usageUrl"] = usageUrl;
-  o["pollSec"]  = pollSec;
+  o["usageUrl"]      = usageUrl;
+  o["pollSec"]       = pollSec;
+  o["rotateSec"]     = rotateSec;
+  o["claudeEnabled"] = claudeEnabled;
+  o["codexEnabled"]  = codexEnabled;
 }
 
 void UsageSettings::fromJson(JsonObjectConst o) {
   if (o["usageUrl"].is<const char*>()) usageUrl = o["usageUrl"].as<String>();
   if (o["pollSec"].is<int>())          pollSec = constrain((int)o["pollSec"], 10, 3600);
+  if (o["rotateSec"].is<int>())        rotateSec = constrain((int)o["rotateSec"], 2, 3600);
+  if (o["claudeEnabled"].is<bool>())   claudeEnabled = o["claudeEnabled"];
+  if (o["codexEnabled"].is<bool>())    codexEnabled = o["codexEnabled"];
 }
 
 // ===========================================================================
@@ -539,6 +548,12 @@ void settingsApplyJson(Settings& s, JsonObjectConst root) {
            : m.equalsIgnoreCase("ha")       ? MODE_HA
            : m.equalsIgnoreCase("carousel") ? MODE_CAROUSEL : MODE_STOCKS;
   }
+#if !WITH_TICKER
+  if (s.mode == MODE_STOCKS) s.mode = MODE_USAGE;
+#endif
+#if !WITH_RADAR
+  if (s.mode == MODE_RADAR) s.mode = MODE_USAGE;
+#endif
   if (root["carouselSec"].is<int>())      s.carouselSec = constrain((int)root["carouselSec"], 5, 3600);
   if (root["carouselTicker"].is<bool>())  s.carouselTicker = root["carouselTicker"];
   if (root["carouselUsage"].is<bool>())   s.carouselUsage = root["carouselUsage"];
