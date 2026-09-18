@@ -18,6 +18,17 @@ Custom firmware for the GeekMagic SmallTV with an ESP-12F / ESP8266 and a 1.54-i
 
 SmallTV-ultra uses the loader file first, then uploads the normal firmware at the loader page.
 
+## Companion clients
+
+The standard firmware can show Claude and Codex usage. It needs one client running on the Mac that owns the corresponding login.
+
+| Service | Client | macOS setup |
+|---|---|---|
+| Codex | Included [`codex-meter`](codex-meter/README.md) | Run `python3 codex_meter.py`; it finds SmallTV devices over Bonjour and pushes usage directly. |
+| Claude | External [clawdmeter-daemon](https://github.com/giovi321/clawdmeter-daemon) (v1.1.0+) | Clone the upstream project and run `./install.sh`; it creates a virtualenv and menu-bar LaunchAgent. |
+
+`clawdmeter-daemon` remains an external dependency so its OAuth-token handling and macOS installer have one maintained source of truth.
+
 ## Build
 
 ```bash
