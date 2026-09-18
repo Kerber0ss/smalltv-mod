@@ -7,11 +7,11 @@
 // Firmware identity
 // ---------------------------------------------------------------------------
 #define FW_NAME     "smalltv-mod"
-#define FW_VERSION  "2.15.0"
+#define FW_VERSION  "2.15.1"
 
 // Project / update references (shown in the web UI; used by the GitHub self-update)
-#define REPO_URL      "https://github.com/giovi321/smalltv-mod"
-#define REPO_OWNER    "giovi321"
+#define REPO_URL      "https://github.com/Kerber0ss/smalltv-mod"
+#define REPO_OWNER    "Kerber0ss"
 #define REPO_NAME     "smalltv-mod"
 // The optional lean ESP8266 image keeps its own update stream.
 #if defined(SMALLTV_LEAN)
