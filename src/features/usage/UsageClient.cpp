@@ -24,13 +24,13 @@ bool usageFresh(uint32_t withinMs) {
 }
 
 // ---- parse: usage contract -------------------------------------------------
-// { "s":29, "sr":142, "w":4, "wr":9876, "st":"allowed", "ok":true }
+// { "s":29, "sr":142, "w":4, "wr":9876, "st":"allowed", "src":"codex", "ok":true }
 //   s  = 5h utilization %        sr = minutes until 5h reset
 //   w  = 7d utilization %        wr = minutes until 7d reset
 //   st = rate-limit status       ok = false => explicit "no data"
 static void usageFilter(JsonDocument& f) {
   f["s"] = true; f["sr"] = true; f["w"] = true;
-  f["wr"] = true; f["st"] = true; f["ok"] = true;
+  f["wr"] = true; f["st"] = true; f["src"] = true; f["ok"] = true;
 }
 
 static bool applyUsageDoc(UsageData& d, JsonDocument& doc) {
@@ -42,6 +42,7 @@ static bool applyUsageDoc(UsageData& d, JsonDocument& doc) {
   d.sessionResetMin = doc["sr"] | 0;
   d.weeklyResetMin  = doc["wr"] | 0;
   strlcpy(d.status, doc["st"] | "", sizeof(d.status));
+  strlcpy(d.source, doc["src"] | "", sizeof(d.source));
 
   d.valid = true;
   d.error = false;

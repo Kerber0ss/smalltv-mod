@@ -110,10 +110,11 @@ static void drawUsage(const UsageData& u, bool fullRepaint) {
 
     // Header: a small calm mascot pose + title.
     blitMascot(gfx, mascotIdleCells(), mascotIdlePalette(), 6, 4, 2);
+    const char* title = strcmp(u.source, "codex") == 0 ? "CODEX" : "CLAUDE";
     gfx->setTextSize(3);
     gfx->setTextColor(C_WHITE);
     gfx->setCursor(56, 12);
-    gfx->print("CLAUDE");
+    gfx->print(title);
     s_flagShown = false;
   }
 
@@ -177,7 +178,8 @@ bool UsageMode::contentChanged(const UsageData& u) const {
       || u.weeklyPct != lastWeeklyPct_
       || u.sessionResetMin != lastSessionResetMin_
       || u.weeklyResetMin != lastWeeklyResetMin_
-      || strncmp(u.status, lastStatus_, sizeof(lastStatus_)) != 0;
+      || strncmp(u.status, lastStatus_, sizeof(lastStatus_)) != 0
+      || strncmp(u.source, lastSource_, sizeof(lastSource_)) != 0;
 }
 
 void UsageMode::rememberContent(const UsageData& u) {
@@ -189,6 +191,7 @@ void UsageMode::rememberContent(const UsageData& u) {
   lastSessionResetMin_ = u.sessionResetMin;
   lastWeeklyResetMin_ = u.weeklyResetMin;
   strlcpy(lastStatus_, u.status, sizeof(lastStatus_));
+  strlcpy(lastSource_, u.source, sizeof(lastSource_));
 }
 
 // ---- DisplayMode ----------------------------------------------------------

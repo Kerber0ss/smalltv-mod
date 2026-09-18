@@ -41,6 +41,7 @@ class UsageMode : public DisplayMode {
   int      lastSessionResetMin_ = -1;
   int      lastWeeklyResetMin_ = -1;
   char     lastStatus_[16] = {0};
+  char     lastSource_[12] = {0};
   bool     lastValid_ = false;
   bool     lastError_ = false;
 };
