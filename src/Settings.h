@@ -101,26 +101,6 @@ struct AuthSettings {
   void fromJson(JsonObjectConst o);
 };
 
-// ---- WireGuard slice (device-wide) -----------------------------------------
-// One tunnel, one peer. Only reaches the wire on builds that compile the client
-// in (the ESP32-C2); elsewhere the settings persist but nothing uses them.
-// Unlike the other slices this one owns a secret, so toJson takes the same
-// includeSecrets flag the top level uses.
-struct WgSettings {
-  bool     enabled;
-  String   privateKey;      // this device's key, never leaves the config file
-  String   peerPublicKey;   // the server's public key
-  String   endpointHost;    // hostname or IP of the peer
-  uint16_t endpointPort;
-  String   address;         // this device inside the tunnel, e.g. "10.6.0.12/32"
-  String   allowedIps;      // what to route into the tunnel, e.g. "10.6.0.0/24"
-  uint16_t keepalive;       // seconds between keepalives; 0 = off
-
-  void setDefaults();
-  void toJson(JsonObject o, bool includeSecrets) const;
-  void fromJson(JsonObjectConst o);
-};
-
 // ---- Panel colour slice (device-wide) --------------------------------------
 // Same firmware, different panels: the SmallTV variants and even units of one
 // variant render the same RGB565 value differently, and a few have red and blue
@@ -209,7 +189,6 @@ struct Settings {
   HaSettings      ha;        // MQTT broker for HA screens
   ClockSettings   clock;
   DisplaySettings display;   // panel colour correction
-  WgSettings      wg;        // WireGuard tunnel (ESP32 targets)
   AuthSettings    auth;      // optional web UI password
 
   void setDefaults();

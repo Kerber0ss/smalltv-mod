@@ -18,7 +18,6 @@
 #include "OtaUpdate.h"
 #include "Mode.h"
 #include "Clock.h"
-#include "WgClient.h"
 #if WITH_NOTIFY
 #include "NotifyMode.h"
 #endif
@@ -158,8 +157,7 @@ void setup() {
 
   // Capture why we (re)booted. On a reboot loop this is the key clue, and the
   // device's UART isn't exposed — so we also show it on screen below. On the
-  // ESP8266 we also keep the crash PC (epc1) for addr2line decoding; the
-  // ESP32-C2 (RISC-V) doesn't expose it, so epc/addr come back empty there.
+  // ESP8266 also keeps the crash PC (epc1) for addr2line decoding.
   PlatformReset pr = platformResetInfo();
   Serial.print("[boot] reset reason: ");
   Serial.println(pr.reason);
@@ -186,24 +184,13 @@ void setup() {
 
   Serial.println("[boot] net");
   netBegin(g_settings, bootProgress);
-  // Arm SNTP now that WiFi (STA) is up — but only if night mode is enabled, so a
-  // ticker-only device doesn't pay the SNTP heap cost (which can starve the cash.ch
-  // TLS handshake on the ESP8266). clockReapply arms it iff needed. Skipped after a
-  // crash so a fault in here can't boot-loop before the web server starts (the
-  // device then comes up in safe mode, OTA-recoverable, instead of needing UART).
-  // ...unless a WireGuard tunnel is configured, which needs the clock and only
-  // exists on an ESP32 where the heap argument for the skip does not apply.
-  if (!g_safeMode || wgNeedsClock(g_settings)) clockReapply(g_settings);
-
-  // Optional WireGuard tunnel (ESP32 targets). Arms the state machine only;
-  // the bring-up itself runs from loop(), so nothing here can delay the web
-  // server. A crash last boot feeds the three-strikes hold that keeps a bad
-  // tunnel config from locking the device out of its own web UI.
-  wgBegin(g_settings, g_safeMode);
+  // Arm SNTP only for night mode, so a ticker-only device keeps TLS headroom.
+  // Skip it after a crash so a fault here cannot boot-loop before recovery UI.
+  if (!g_safeMode) clockReapply(g_settings);
 
   // A GitHub update queued from the web UI runs now, before the features claim
   // the heap (the download needs a 16 KB TLS buffer that only fits at boot).
-  // On success it reboots into the new image; a no-op stub on the ESP32 targets.
+  // On success it reboots into the new image.
   if (otaBootRequested()) {
     Serial.println("[boot] github update");
     gfxBoot("SmallTV", "updating...");
@@ -244,11 +231,6 @@ void loop() {
     delay(120);
     ESP.restart();
   }
-
-  // Before the safe-mode return on purpose: if the crash had nothing to do with
-  // the tunnel, remote access survives it, and if it did, the three-strikes hold
-  // stops the retries by itself.
-  wgService(g_settings);
 
   if (g_safeMode) {
     delay(5);

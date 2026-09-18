@@ -9,7 +9,7 @@ One button applies everything: **Save settings**, at the very bottom of the page
 
 ## Status
 
-Read-only. Shows the firmware version, whether the device is online, its network name, IP address, signal strength, free memory, how long it has been running since the last restart, and why it last restarted. On a device with the WireGuard client, a VPN line says whether the tunnel is up.
+Read-only. Shows the firmware version, whether the device is online, its network name, IP address, signal strength, free memory, how long it has been running since the last restart, and why it last restarted.
 
 The live ticker values used to be here; they now sit at the top of the Ticker tab, next to the settings that produce them.
 
@@ -22,8 +22,6 @@ Free memory and "last reset" are mostly useful when something is wrong; see [Tro
 Networks must be 2.4 GHz. If you cannot see your network in the scan, see [Troubleshooting](/smalltv-mod/manual/troubleshooting/#my-wifi-network-is-not-in-the-scan-list).
 
 **Device name (hostname)**: the name used in `http://<name>.local`. Every device ships with a unique default like `smalltv-3fa2` so several units can share a network without clashing; rename it to something memorable (`smalltv-kitchen`) if you like. Saving a new name restarts the device.
-
-**WireGuard VPN**: only on devices whose firmware includes it (the ESP32-C2, the SmallTV Pro, and an NM-TV-154 running the `-esp32-wg` image). A tunnel that lets you reach the settings page from outside your home network without opening a port to the internet. Full walkthrough in [WireGuard VPN](/smalltv-mod/features/wireguard/); the short version is that you generate a key pair, paste the private half here and the public half into your VPN server, and fill in the server's public key, its address and port, the address this device should have inside the tunnel, and which addresses it should route through it. The line above the fields says what the tunnel is doing, and names the likely cause when it is not up.
 
 **Setup hotspot (AP)**: the name and password of the temporary network the device creates when it has no WiFi to join, or cannot reach any of its saved ones. Change these if you want a different setup network name, or leave them as they are; most people never touch this section again after the first setup.
 
@@ -71,7 +69,7 @@ Two fields: the address of the daemon running on your PC, the small program that
 
 **Manual update (OTA)**: upload a firmware file by hand instead, useful if the device cannot reach GitHub or you built the firmware yourself.
 
-**Settings backup**: "Export settings" downloads the device's whole configuration as a file, including saved WiFi passwords and the WireGuard private key in plain text, so store that file the way you would store a password. "Import" applies a previously exported file and restarts the device; useful when replacing a unit or copying one device's setup to another.
+**Settings backup**: "Export settings" downloads the device's whole configuration as a file, including saved WiFi passwords in plain text, so store that file the way you would store a password. "Import" applies a previously exported file and restarts the device; useful when replacing a unit or copying one device's setup to another.
 
 **Password**: off by default, which is why the settings page opens for anyone on your network. Tick "Ask for a password to open this page", set a username and password, and save; from then on the browser asks for them before showing the page, and the same applies to the firmware upload and everything the page talks to. The one exception is the address the Clawdmeter program on your PC pushes to, which has no way to send a password and can only change the numbers on the screen. There is no way to recover a forgotten password: the only way back into a locked device is to reinstall the firmware over a cable. Write it down somewhere before you save.
 

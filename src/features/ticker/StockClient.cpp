@@ -450,7 +450,7 @@ static bool fetchUrl(const Settings& s, const String& url, ParseKind kind, Stock
 
   std::unique_ptr<NetClient> client;
   if (https) {
-    // Per-source TLS shaping (ESP8266; the ESP32 ignores the hints):
+    // Per-source TLS shaping for the ESP8266:
     //  - cash.ch: must do ECDHE. Keep it cheap — 512 B buffers (it honors MFLN)
     //    and session resumption, and require a large CONTIGUOUS free block up
     //    front so a fragmented heap skips the fetch instead of crashing inside
@@ -476,7 +476,7 @@ static bool fetchUrl(const Settings& s, const String& url, ParseKind kind, Stock
   http.setReuse(false);
   // HTTP/1.0 so the server can't reply with chunked framing: the parsers read
   // the raw stream via getStream(), which neither core de-chunks. Yahoo chunks
-  // its HTTP/1.1 responses, which broke Yahoo tickers on the ESP32 targets.
+  // its HTTP/1.1 responses.
   http.useHTTP10(true);
   if (!http.begin(*client, url)) return false;
   http.addHeader("Accept", "application/json");

@@ -9,7 +9,7 @@ export default defineConfig({
     starlight({
       title: 'smalltv-mod',
       description:
-        'Open-source firmware for the GeekMagic SmallTV and its ESP32-C2 and classic-ESP32 lookalikes: ticker, Claude usage meter, plane radar, and a WireGuard tunnel.',
+        'Open-source ESP8266 firmware for the GeekMagic SmallTV: ticker, Claude usage meter, plane radar, and Home Assistant screens.',
       logo: {
         src: './src/assets/logo.svg',
         replacesTitle: false,
@@ -29,7 +29,7 @@ export default defineConfig({
         {
           label: 'Getting started',
           items: [
-            { label: 'Hardware and variants', link: '/getting-started/hardware/' },
+            { label: 'Hardware', link: '/getting-started/hardware/' },
             { label: 'Flashing', link: '/getting-started/flashing/' },
             { label: 'First-time setup', link: '/getting-started/setup/' },
           ],
@@ -49,7 +49,6 @@ export default defineConfig({
             { label: 'Stock and crypto ticker', link: '/features/ticker/' },
             { label: 'Claude usage meter', link: '/features/usage/' },
             { label: 'Plane radar', link: '/features/radar/' },
-            { label: 'WireGuard VPN', link: '/features/wireguard/' },
             { label: 'Notifications', link: '/features/notify/' },
             { label: 'Home Assistant screens', link: '/features/ha/' },
           ],

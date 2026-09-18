@@ -58,7 +58,7 @@ The two types named after the endpoint's original states, `done` and `waiting`, 
 
 Overlays queue rather than overwrite. When one expires the next takes the panel, so a burst of events is shown in turn instead of leaving only the last one.
 
-The queue holds 4 on the ESP32 boards and 2 on the ESP8266, on top of the one on screen. It is ordered by priority first and arrival second, so equal-priority events are shown in the order they were fired and a more important one goes to the front of the line. An arrival that is **strictly** more important than what is on screen does not wait at all: it takes the panel immediately, and the overlay it interrupted is dropped rather than requeued — it has already had its time on screen.
+The queue holds 2 items on top of the one on screen. It is ordered by priority first and arrival second, so equal-priority events are shown in the order they were fired and a more important one goes to the front of the line. An arrival that is **strictly** more important than what is on screen does not wait at all: it takes the panel immediately, and the overlay it interrupted is dropped rather than requeued — it has already had its time on screen.
 
 When the queue is full, the arrival displaces the least important thing waiting. If everything already queued outranks it, the arrival is the one refused, with HTTP 429.
 
@@ -70,7 +70,7 @@ This is what priority is for: an `alert` fired while three `info` notices are qu
 
 A label that fits on one line is centred and still. A longer one scrolls right to left, continuously, for as long as the overlay is up — after a short pause on the first frame so a label that only just overflows is readable before it moves.
 
-The buffer is 96 characters on the ESP32 boards and 48 on the ESP8266; past that the label is cut. Anything outside plain printable ASCII is dropped, so accents and emoji disappear rather than drawing as blanks.
+The buffer is 48 characters; past that the label is cut. Anything outside plain printable ASCII is dropped, so accents and emoji disappear rather than drawing as blanks.
 
 It scrolls at 100 px/s, which is 120 ms per character. A 90-character label is 1108 px including the gap before it repeats, so one full pass takes about 11 seconds: at the default `ttl` of 20 it goes round just under twice. Anything much longer than that, or a shorter `ttl`, is worth pairing with a raised `ttl` — otherwise the end of the message may never reach the screen.
 

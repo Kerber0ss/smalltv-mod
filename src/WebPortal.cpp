@@ -15,7 +15,6 @@
 #include "NotifyMode.h"
 #endif
 #include "Clock.h"
-#include "WgClient.h"
 #if WITH_HA
 #include "HaScreens.h"
 #include "MqttClient.h"
@@ -80,21 +79,7 @@ static void handleGetConfig() {
   feat["usage"]  = (bool)WITH_USAGE;
   feat["radar"]  = (bool)WITH_RADAR;
   feat["ha"]     = (bool)WITH_HA;
-  // WireGuard is a per-chip decision rather than a per-feature one: it is
-  // compiled only where the image has room for it (the ESP32-C2 build).
-#if defined(SMALLTV_WIREGUARD)
-  feat["wireguard"] = true;
-#else
-  feat["wireguard"] = false;
-#endif
-  // Which chip this build runs on (the UI warns about per-chip limitations).
-#if defined(SMALLTV_ESP32C2)
-  root["chip"] = "esp32c2";
-#elif defined(SMALLTV_ESP32)
-  root["chip"] = "esp32";
-#else
   root["chip"] = "esp8266";
-#endif
   sendJson(doc);
 }
 
@@ -123,7 +108,6 @@ static void handleStatus() {
   o["night"]     = clockNightActive();   // dimming now
   o["nightHeld"] = clockNightHeld();      // in the window but waiting for a fresh NTP sync
   o["clockFresh"] = clockTrusted();       // last NTP sync within the trust window
-  wgStatusJson(o["wg"].to<JsonObject>()); // tunnel state (compiledIn=false where it isn't built)
 
 #if WITH_TICKER
   JsonArray arr = o["tickers"].to<JsonArray>();
@@ -182,21 +166,6 @@ static String netFingerprint(const Settings& s) {
   return f;
 }
 
-// Everything the tunnel is built from. A change here tears it down and brings
-// it back up with the new settings; an unchanged save leaves a working tunnel
-// alone.
-static String wgFingerprint(const Settings& s) {
-  String f(s.wg.enabled ? '1' : '0');
-  f += s.wg.privateKey;    f += '\x01';
-  f += s.wg.peerPublicKey; f += '\x01';
-  f += s.wg.endpointHost;  f += '\x01';
-  f += String(s.wg.endpointPort); f += '\x01';
-  f += s.wg.address;       f += '\x01';
-  f += s.wg.allowedIps;    f += '\x01';
-  f += String(s.wg.keepalive);
-  return f;
-}
-
 static void handlePostConfig() {
   if (!requireAuth()) return;
   if (!server.hasArg("plain")) { server.send(400, "text/plain", "no body"); return; }
@@ -208,8 +177,6 @@ static void handlePostConfig() {
   }
 
   String oldNet = netFingerprint(*S);
-  String oldWg = wgFingerprint(*S);
-
   settingsApplyJson(*S, doc.as<JsonObjectConst>());
   saveSettings(*S);
 
@@ -219,20 +186,12 @@ static void handlePostConfig() {
   gfxApplyColors(*S);       // rotation, panel colour order/inversion, channel gain
   appInvalidate();          // re-init every mode + repaint (covers mode/URL/symbol changes)
 
-  // Rebuild the tunnel when its settings changed. A save that changes nothing
-  // still rebuilds while the tunnel is held after repeated crashes: that
-  // re-save is the deliberate "I fixed it, try again".
-  bool wgChanged = (wgFingerprint(*S) != oldWg) || wgHeld();
   bool wifiChanged = netFingerprint(*S) != oldNet;
 
   JsonDocument res;
   res["ok"] = true;
   res["reboot"] = wifiChanged;
   sendJson(res);
-
-  // After the response, not before: a browser reaching the device *through* the
-  // tunnel would otherwise lose the answer to the very save that rebuilt it.
-  if (wgChanged) wgReapply(*S);
 
   if (wifiChanged) scheduleReboot(800);
 }
@@ -441,9 +400,7 @@ static void handleUpdateUpload() {
     return;
   }
   if (up.status == UPLOAD_FILE_START) {
-#if defined(SMALLTV_ESP8266)
     WiFiUDP::stopAll();   // free UDP sockets so the OTA has max contiguous flash/heap
-#endif
     uint32_t maxSpace = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
     if (!Update.begin(maxSpace)) Update.printError(Serial);
   } else if (up.status == UPLOAD_FILE_WRITE) {
@@ -513,10 +470,9 @@ void webPortalLoop() {
   // response first.
   if (g_selfUpdate) {
     g_selfUpdate = false;
-#if defined(SMALLTV_ESP8266)
-    // RAM-tight chip: verify there is something to install, then queue the
-    // download for the next boot (otaBootUpdate in setup(), ~45 KB free) and
-    // reboot. A failure there lands back in g_updateMsg via otaTakeBootResult.
+    // Verify there is something to install, then queue the download for the next
+    // boot (otaBootUpdate in setup(), ~45 KB free) and reboot. A failure there
+    // lands back in g_updateMsg via otaTakeBootResult.
     OtaLatest r = otaCheckLatest(*S);
     if (!r.ok)         g_updateMsg = "check failed: " + r.error;
     else if (!r.newer) g_updateMsg = "already up to date (" FW_VERSION ")";
@@ -526,12 +482,6 @@ void webPortalLoop() {
     } else {
       g_updateMsg = F("could not queue update (storage error)");
     }
-#else
-    // ESP32 targets: mbedTLS has the RAM to download in place; blocks while it
-    // runs and reboots into the new image on success.
-    String err = otaUpdateFromGitHub(*S);
-    g_updateMsg = err.length() ? err : "updating...";
-#endif
   }
 }
 

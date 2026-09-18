@@ -1,11 +1,6 @@
 // config.h — compile-time constants for smalltv-mod
 //
-// Hardware: three board variants, all a 1.54" 240x240 ST7789 IPS panel:
-//   - Original GeekMagic SmallTV: ESP-12F (ESP8266)      [board_esp8266.h]
-//   - Knockoff SmallTV:           ESP32-C2 / ESP8684      [board_esp32c2.h]
-//   - NMMiner NM-TV-154:          classic ESP32 (WROOM-32E) [board_esp32.h]
-// The board-specific pin map + panel quirks live in the board headers, selected
-// below by the build-time target macro. Everything else here is shared.
+// Hardware: GeekMagic SmallTV, ESP-12F (ESP8266), 1.54" 240x240 ST7789 IPS.
 #pragma once
 
 // ---------------------------------------------------------------------------
@@ -18,30 +13,8 @@
 #define REPO_URL      "https://github.com/giovi321/smalltv-mod"
 #define REPO_OWNER    "giovi321"
 #define REPO_NAME     "smalltv-mod"
-// Release asset the GitHub self-updater pulls, and the short variant name shown
-// in the web UI. One app image per target, plus a second one for the two boards
-// that ship a stripped or extended build of the same hardware: the ESP8266
-// (standard and lean) and the NM-TV-154 (with and without the WireGuard
-// client). A device keeps its own variant across a self-update instead of
-// silently gaining or losing features.
-//
-// Order matters: this is an #if defined() chain, and both SMALLTV_ESP32_PRO and
-// SMALLTV_ESP32_WG are defined alongside SMALLTV_ESP32 rather than instead of
-// it, so they have to be tested first or they fall into the plain esp32 case
-// and the device self-updates itself onto the wrong image.
-#if defined(SMALLTV_ESP32C2)
-  #define UPDATE_ASSET "smalltv-mod-firmware-c2.bin"
-  #define FW_VARIANT   "c2"
-#elif defined(SMALLTV_ESP32_PRO)
-  #define UPDATE_ASSET "smalltv-mod-firmware-esp32-pro.bin"
-  #define FW_VARIANT   "esp32-pro"
-#elif defined(SMALLTV_ESP32_WG)
-  #define UPDATE_ASSET "smalltv-mod-firmware-esp32-wg.bin"
-  #define FW_VARIANT   "esp32-wg"
-#elif defined(SMALLTV_ESP32)
-  #define UPDATE_ASSET "smalltv-mod-firmware-esp32.bin"
-  #define FW_VARIANT   "esp32"
-#elif defined(SMALLTV_LEAN)
+// The optional lean ESP8266 image keeps its own update stream.
+#if defined(SMALLTV_LEAN)
   #define UPDATE_ASSET "smalltv-mod-firmware-lean.bin"
   #define FW_VARIANT   "esp8266-lean"
 #else
@@ -52,19 +25,11 @@
 #define DAEMON_URL    "https://github.com/giovi321/clawdmeter-daemon"
 
 // ---------------------------------------------------------------------------
-// Display wiring + panel quirks — board-specific, pulled from the right header.
+// Display wiring + panel quirks.
 // Provides TFT_SCLK/MOSI/DC/RST/CS/BL, TFT_BGR, TFT_BL_DEFAULT_INVERTED,
 // HAS_LDR/LDR_PIN/ADC_MAX. Both panels are 1.54" 240x240 ST7789 IPS.
 // ---------------------------------------------------------------------------
-#if defined(SMALLTV_ESP32C2)
-  #include "board_esp32c2.h"
-#elif defined(SMALLTV_ESP32_PRO)
-  #include "board_esp32_pro.h"
-#elif defined(SMALLTV_ESP32)
-  #include "board_esp32.h"
-#else
-  #include "board_esp8266.h"
-#endif
+#include "board_esp8266.h"
 
 #define TFT_WIDTH  240
 #define TFT_HEIGHT 240
@@ -109,25 +74,6 @@
 #define AUTH_REALM        "SmallTV"
 
 // ---------------------------------------------------------------------------
-// WireGuard client. Compiled only where the image has room for it: see
-// SMALLTV_WIREGUARD in platformio.ini, which sets it for the ESP32-C2, the 8 MB
-// SmallTV Pro, and smalltv_esp32_wg, the second NM-TV-154 image. Reaches the
-// device from outside the LAN without forwarding its plain-HTTP port to the
-// internet. The ESP8266 has neither the flash nor the heap for it.
-//
-// The field sizes below are compiled unconditionally, and Settings still reads
-// and writes the wg block whether or not the client is in the image. That is
-// deliberate: it lets an NM-TV-154 move between the esp32 and esp32-wg images
-// without losing a tunnel configuration it already had.
-// ---------------------------------------------------------------------------
-#define MAX_WG_KEY_LEN    48   // base64 x25519 key is 44 chars + NUL, with headroom
-#define MAX_WG_HOST_LEN   64   // endpoint hostname or IP
-#define MAX_WG_ADDR_LEN   24   // tunnel address without the prefix
-#define MAX_WG_ALLOWED_LEN 80  // comma-separated allowed-IPs list
-#define DEFAULT_WG_PORT        51820
-#define DEFAULT_WG_KEEPALIVE      25   // seconds; 0 = off. 25 survives most NATs
-
-// ---------------------------------------------------------------------------
 // Display mode — what the device shows
 //   0 = stock / crypto ticker (per-symbol source, see SRC_* below)
 //   1 = Claude usage meter (mascot + 5h/7d usage bars, fed by the daemon/)
@@ -150,16 +96,9 @@
 
 // Pending overlays wait in a fixed-size queue rather than overwriting each other,
 // so a burst shows every event in turn instead of only the last one. Depth and
-// label length are the whole RAM cost of the feature and the ESP8266 pays for
-// them out of the same 80 KB arena as the heap, so it gets the smaller pair:
-// 2 x 64 B of label against 4 x 112 B here.
-#if defined(SMALLTV_ESP32) || defined(SMALLTV_ESP32C2) || defined(SMALLTV_ESP32_PRO)
-#define NOTIFY_QUEUE_DEPTH       4
-#define NOTIFY_LABEL_MAX        96
-#else
+// label length are the whole RAM cost of the feature, so keep the small pair.
 #define NOTIFY_QUEUE_DEPTH       2
 #define NOTIFY_LABEL_MAX        48
-#endif
 #define NOTIFY_TITLE_MAX        20   // the word above the label, one panel line
 
 // Priority decides queue order and pre-emption: a strictly higher one jumps the
@@ -185,25 +124,14 @@
 // ---------------------------------------------------------------------------
 // Home Assistant screens (MODE_HA, features/ha): full screens pushed over MQTT
 // as retained JSON draw lists, one per slot, on smalltv/<hostname>/screen/<slot>.
-// The C2 counts as an ESP32 here (the docs group them); the ESP8266 column of
-// the limits table is for the original GeekMagic unit only, where heap is the
-// binding constraint. MQTT_MAX_PACKET_SIZE is NOT set here: it has to reach
-// PubSubClient's own translation units, so it is a -D in each env's
-// build_flags in platformio.ini (2048 on the ESP32 family, 768 on ESP8266).
+// Heap is the binding constraint. MQTT_MAX_PACKET_SIZE reaches PubSubClient
+// through platformio.ini build_flags.
 // ---------------------------------------------------------------------------
-#if defined(SMALLTV_ESP32) || defined(SMALLTV_ESP32C2) || defined(SMALLTV_ESP32_PRO)
-  #define HA_MAX_SCREENS   8      // slots kept; carousel order = slot name order
-  #define HA_MAX_PRIMS     48     // draw primitives kept per screen
-  #define HA_TEXT_POOL     2048   // per-screen pool backing the text primitives
-  #define HA_BITMAP_POOL   2048   // per-screen pool of decoded 1-bit bitmap bytes
-  #define HA_BITMAP_MAX_DIM 48    // bitmap w/h cap: one bitmap is <= 288 B
-#else
-  #define HA_MAX_SCREENS   4
-  #define HA_MAX_PRIMS     24
-  #define HA_TEXT_POOL     512    // the 768 B MQTT payload bounds text anyway
-  #define HA_BITMAP_POOL   512
-  #define HA_BITMAP_MAX_DIM 32    // one bitmap is <= 128 B (256 hex chars)
-#endif
+#define HA_MAX_SCREENS   4
+#define HA_MAX_PRIMS     24
+#define HA_TEXT_POOL     512    // the 768 B MQTT payload bounds text anyway
+#define HA_BITMAP_POOL   512
+#define HA_BITMAP_MAX_DIM 32    // one bitmap is <= 128 B (256 hex chars)
 #define HA_MAX_TEXT        65     // one text value: 64 chars + NUL
 #define HA_SLOT_LEN        25     // slot (topic suffix) cap: 24 chars + NUL
 #define HA_TTL_MAX_SEC     604800UL  // ttl clamp: 7 days (keeps millis() math sane)
@@ -273,8 +201,7 @@
 // slim daily-close series for the sparkline. No API key, no cookies, no
 // required headers. The symbol is the cash.ch listing key
 // `valor-marketId-currencyId` (see the docs for how to find it).
-// cash.ch's CDN requires ECDHE. The ESP32 targets (mbedTLS) do this easily. The
-// ESP8266 (BearSSL) can too, but the handshake is memory-tight, so the cash
+// cash.ch's CDN requires ECDHE. The BearSSL handshake is memory-tight, so the cash
 // path is shaped to fit: only cash.ch is offered ECDHE (Yahoo and the GitHub
 // source are pinned to the cheap static-RSA suites), the connection uses 512 B
 // buffers + TLS session resumption, and StockClient skips a fetch unless a
@@ -322,14 +249,9 @@
 
 // Default direct provider. adsb.fi sits behind Cloudflare, which does not
 // negotiate the TLS max_fragment_length extension and sends records larger
-// than BearSSL's fallback 4 KB buffer, so the ESP8266 cannot read a busy
-// response; adsb.lol still honours MFLN and keeps the TLS footprint tiny.
-// The ESP32 uses mbedTLS with dynamic buffers and is not affected either way.
-#if defined(SMALLTV_ESP8266)
-  #define DEFAULT_RADAR_SRC  RADAR_SRC_ADSBLOL
-#else
-  #define DEFAULT_RADAR_SRC  RADAR_SRC_ADSBFI
-#endif
+// than BearSSL's fallback 4 KB buffer, so it cannot read a busy response;
+// adsb.lol still honours MFLN and keeps the TLS footprint tiny.
+#define DEFAULT_RADAR_SRC  RADAR_SRC_ADSBLOL
 
 // Bound RAM: nearest N aircraft kept/drawn, and a few home-area airports.
 #define MAX_AIRCRAFT     24

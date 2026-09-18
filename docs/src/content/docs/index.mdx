@@ -1,9 +1,9 @@
 ---
 title: smalltv-mod
-description: Open-source firmware for the GeekMagic SmallTV (ESP8266 and ESP32-C2), the SmallTV Pro, and the NMMiner NM-TV-154. Stock ticker, Claude usage meter, and plane radar in one image.
+description: Open-source firmware for the GeekMagic SmallTV (ESP8266). Stock ticker, Claude usage meter, and plane radar in one image.
 template: splash
 hero:
-  tagline: One firmware, three modes, four boards. Turn a cheap SmallTV cube into a ticker, a Claude usage meter, or a plane radar.
+  tagline: One firmware, three modes. Turn a SmallTV cube into a ticker, a Claude usage meter, or a plane radar.
   image:
     file: ../../assets/logo.svg
   actions:
@@ -36,29 +36,24 @@ The GeekMagic SmallTV is a small cube with a 1.54" colour screen, an ESP inside,
   </Card>
 </CardGrid>
 
-Plus one thing that is not a mode: on every ESP32 board the firmware carries a [WireGuard client](/smalltv-mod/features/wireguard/), so you can reach the device from outside your network without opening a port to the internet. The ESP32-C2 and the 8 MB SmallTV Pro have it in their only image; on the NM-TV-154, whose image is the tightest fit of the three, it comes in a second image you pick at install time.
-
 ## More than the three modes
 
 A [Home Assistant screen](/smalltv-mod/features/ha/) arrives over MQTT as a JSON draw list and the device shows it as a full 240×240 screen. A [notification](/smalltv-mod/features/notify/) takes the panel for a few seconds when a script pushes one over HTTP, then puts back whatever was showing. And the [ticker](/smalltv-mod/features/ticker/) adds a portfolio summary page to its rotation once a symbol carries a quantity and a cost basis.
 
 ![A Home Assistant screen pushed over MQTT, a notification overlay, and the ticker's portfolio summary](/smalltv-mod/assets/screen2.svg)
 
-## Four hardware variants
+## Supported hardware
 
-This firmware builds for four boards from one codebase. Confirm which one you have before you flash it.
+This firmware builds for the GeekMagic SmallTV with an ESP8266.
 
 <CardGrid>
   <LinkCard title="SmallTV (ESP8266)" href="/smalltv-mod/getting-started/hardware/" description="ESP-12F. Flashes over the air from the stock web UI." />
-  <LinkCard title="SmallTV (ESP32-C2 / ESP8684)" href="/smalltv-mod/getting-started/hardware/" description="CH340C next to the USB-C port. Flashes over USB-C with esptool." />
-  <LinkCard title="NM-TV-154 (classic ESP32)" href="/smalltv-mod/getting-started/hardware/" description="NMMiner BTC lottery miner, same cube and screen. Flashes over USB with esptool." />
-  <LinkCard title="SmallTV Pro (classic ESP32, 8 MB)" href="/smalltv-mod/getting-started/hardware/" description="GeekMagic's higher-end model with a touch button. Flashes over the air from the stock web UI (USB-C is power only)." />
 </CardGrid>
 
 ## Start here
 
 <CardGrid>
-  <LinkCard title="Hardware and variants" href="/smalltv-mod/getting-started/hardware/" />
+  <LinkCard title="Hardware" href="/smalltv-mod/getting-started/hardware/" />
   <LinkCard title="Flashing" href="/smalltv-mod/getting-started/flashing/" />
   <LinkCard title="First-time setup" href="/smalltv-mod/getting-started/setup/" />
   <LinkCard title="Building from source" href="/smalltv-mod/reference/building/" />

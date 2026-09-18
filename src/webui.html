@@ -82,25 +82,6 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
    <label>Hostname</label><input id="hostname" type="text" placeholder="smalltv">
    <small class="hint">Reachable as <code>http://&lt;hostname&gt;.local</code> via mDNS. Running several SmallTVs? Give each its own name (<code>smalltv-desk</code>, <code>smalltv-shelf</code>) so browsers and the clawdmeter daemon's <code>--push-to</code> reach the right device. Saving a new name reboots the device.</small>
   </div>
-  <div class="card" id="wgCard"><h2>WireGuard VPN</h2>
-   <div id="wgStatus" class="muted" style="margin-bottom:10px">-</div>
-   <div class="chk"><input id="wgEnabled" type="checkbox"><label>Enable the tunnel</label></div>
-   <label>This device's private key</label>
-   <input id="wgPrivateKey" type="password" autocomplete="off" placeholder="(unchanged)">
-   <label>Peer public key</label>
-   <input id="wgPeerPublicKey" type="text" autocomplete="off" placeholder="server public key">
-   <div class="row">
-    <div><label>Endpoint host</label><input id="wgEndpointHost" type="text" placeholder="vpn.example.com"></div>
-    <div style="flex:0 0 110px"><label>Port</label><input id="wgEndpointPort" type="number" min="1" max="65535"></div>
-   </div>
-   <label>Tunnel address</label>
-   <input id="wgAddress" type="text" placeholder="10.6.0.12/32">
-   <label>Allowed IPs</label>
-   <input id="wgAllowedIps" type="text" placeholder="10.6.0.0/24">
-   <label>Keepalive (s, 0 = off)</label>
-   <input id="wgKeepalive" type="number" min="0" max="3600">
-   <small class="hint">Reaches the device from outside your LAN without forwarding port 80 to the internet. Generate the key pair on your computer (<code>wg genkey | tee dev.key | wg pubkey</code>), put the private key here and the public one on the server as this device's peer; most VPN servers and providers hand you both. <b>Allowed IPs</b> decides what the device routes into the tunnel, and it also sets the tunnel netmask, so a lone <code>/32</code> address reaches nothing: list the subnet the peer is on (<code>10.6.0.0/24</code>). <code>0.0.0.0/0</code> sends everything through the VPN. The private key stays on the device and in its settings export; the page never reads it back. The tunnel needs the clock, so NTP starts whenever it is enabled.</small>
-  </div>
   <div class="card"><h2>Setup hotspot (AP)</h2>
    <label>AP name</label><input id="apSsid" type="text">
    <label>AP password <span class="muted">(min 8 chars)</span></label>
@@ -330,7 +311,7 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
    <button class="btn sec" onclick="location.href='/api/export'">Export settings</button>
    <input id="cfgFile" type="file" accept=".json,application/json" style="margin-top:10px">
    <div style="margin-top:10px"><button class="btn" onclick="importCfg()">Import &amp; reboot</button></div>
-   <small class="hint">The export is the device's <code>config.json</code>, including WiFi passwords and the WireGuard private key in clear text; treat the file accordingly. Import applies everything and reboots.</small>
+   <small class="hint">The export is the device's <code>config.json</code>, including WiFi passwords in clear text; treat the file accordingly. Import applies everything and reboots.</small>
   </div>
   <div class="card"><h2>Password</h2>
    <div class="chk"><input id="authEnabled" type="checkbox"><label>Ask for a password to open this page</label></div>
@@ -431,14 +412,6 @@ function resetColors(){setGain('rGain','rgVal',100);setGain('gGain','ggVal',100)
  toast('Gains reset — press Save settings to apply')}
 function loadConfig(){return j('/api/config').then(function(c){C=c;
  var f=c.features||{}; ['ticker','usage','radar','ha'].forEach(function(k){if(f[k]===false)hideFeat(k)});
- // WireGuard is only built for the chips with room for it; drop the card otherwise
- if(f.wireguard===false){var wc=$('wgCard'); if(wc)wc.remove()}
- var w=c.wg||{};
- sc('wgEnabled',!!w.enabled); sv('wgPeerPublicKey',w.peerPublicKey);
- sv('wgEndpointHost',w.endpointHost); sv('wgEndpointPort',w.endpointPort||51820);
- sv('wgAddress',w.address); sv('wgAllowedIps',w.allowedIps);
- sv('wgKeepalive',w.keepalive!=null?w.keepalive:25);
- var pk=$('wgPrivateKey'); if(pk)pk.placeholder=w.privateKeySet?'(unchanged)':'paste the private key';
  var t=c.ticker||{}, u=c.usage||{};
  // shared
  ['apSsid','hostname'].forEach(function(k){$(k).value=c[k]!=null?c[k]:''});
@@ -452,7 +425,7 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
  sv('colorOrder',dp.colorOrder||'auto'); sc('colorInvert',!!dp.invert);
  setGain('rGain','rgVal',dp.rGain); setGain('gGain','ggVal',dp.gGain); setGain('bGain','bgVal',dp.bGain);
  // header chip = which chip this firmware was built for
- var chipName={esp8266:'ESP8266',esp32c2:'ESP32-C2',esp32:'ESP32'}[c.chip]||'';
+ var chipName='ESP8266';
  var chE=$('chip'); if(chE&&chipName){chE.textContent=chipName;chE.style.display='inline-block';}
  // clock slice
  fillTz(); var ck=c.clock||{};
@@ -506,8 +479,7 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
 function esc(s){return (''+(s==null?'':s)).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
 function symHintFor(v){var h=$('symHint');if(!h)return;
  h.innerHTML=(v==='cash'
-  ?'<b>cash.ch</b>: fetched directly by the device. The symbol is a listing key like <code>123456789-246-333</code>; the finder below turns a cash.ch link, ISIN, or name into one.'
-   +(C.chip==='esp8266'?' <b>On this ESP8266</b>, cash.ch\'s TLS is tight on this chip &mdash; if it proves unstable, use the <b>GitHub</b> source for the same listing key instead. The ESP32 boards fetch cash.ch directly.':'')
+  ?'<b>cash.ch</b>: fetched directly by the device. The symbol is a listing key like <code>123456789-246-333</code>; the finder below turns a cash.ch link, ISIN, or name into one. <b>On this ESP8266</b>, cash.ch\'s TLS is tight; if it proves unstable, use the <b>GitHub</b> source for the same listing key instead.'
   :v==='github'
   ?'<b>GitHub</b>: reads a listing key\'s quote from a small static JSON published to a repo\'s <code>data</code> branch (a proxy for cash.ch on chips that can\'t reach it directly). The symbol is the cash.ch listing key. You publish the files yourself from a fork &mdash; the repo ships the example fetcher (<code>fetch-quotes.mjs</code> + <code>quotes-config.json</code>); see the docs.'
   :v==='webhook'
@@ -545,7 +517,7 @@ function radarSrcChanged(){if(!$('radarSource'))return;var v=$('radarSource').va
  $('radarWebhookRow').style.display=(v==='webhook')?'block':'none';
  $('radarSrcHint').innerHTML=
   (v==='adsblol')?'The device fetches <b>adsb.lol</b> directly over HTTPS (no key, ~1 req/s). Recommended on the ESP8266: adsb.lol negotiates a small TLS record size, so the handshake fits in RAM.'
- :(v==='adsbfi') ?'The device fetches <b>adsb.fi</b> directly over HTTPS (no key, ~1 req/s). Fine on the ESP32, but adsb.fi now sits behind Cloudflare and sends TLS records too large for the ESP8266 — pick adsb.lol or the webhook there.'
+ :(v==='adsbfi') ?'The device fetches <b>adsb.fi</b> directly over HTTPS (no key, ~1 req/s), but its TLS records are too large for this ESP8266. Pick adsb.lol or the webhook instead.'
  :'The device requests <code>?lat=..&amp;lon=..&amp;dist=..</code> from your LAN proxy, which pre-filters the feed to a small JSON. Most reliable on the ESP8266.';}
 
 function collect(){
@@ -570,16 +542,6 @@ function collect(){
  // blank field unconditionally used to wipe the stored password on every save.
  if(gc('apOpen')) o.apPass='';
  else { var _ap=gv('apPass'); if(_ap) o.apPass=_ap; }
- // WireGuard: a blank private key means "keep the stored one", so only send it
- // when the user actually typed something.
- if($('wgCard')){
-  var w={enabled:gc('wgEnabled'), peerPublicKey:gv('wgPeerPublicKey'),
-   endpointHost:gv('wgEndpointHost'), endpointPort:parseInt(gv('wgEndpointPort'))||51820,
-   address:gv('wgAddress'), allowedIps:gv('wgAllowedIps'),
-   keepalive:parseInt(gv('wgKeepalive'))||0};
-  var pk=gv('wgPrivateKey'); if(pk)w.privateKey=pk;
-  o.wg=w;
- }
  // ticker slice (only if compiled in)
  if($('ticker')){
   var t={colorInverted:gv('colorInverted')==='true',changeOnRange:gv('changeOnRange')==='true'};
@@ -697,9 +659,7 @@ function loadStatus(){j('/api/status').then(function(s){
   kv('Signal',s.rssi?s.rssi+' dBm':'-')+
   kv('Free heap',s.heap+' B'+(s.maxblk?' ('+s.maxblk+' B largest block)':''))+
   kv('Uptime',fmtUp(s.uptime))+kv('Last reset',s.reset||'-')+
-  ((s.wg&&s.wg.compiledIn)?kv('VPN',s.wg.held?'held':(s.wg.up?'up':(s.wg.enabled?'connecting':'off'))):'')+
   (s.radar?kv('Radar',radarLine(s.radar)):'');
- var wgs=$('wgStatus'); if(wgs)wgs.textContent=wgLine(s.wg);
  var tb=$('tickBox');
  if(tb){var h='';(s.tickers||[]).forEach(function(t){
   var c=t.error?'var(--red)':(t.valid?'var(--acc)':'var(--mut)');
@@ -712,7 +672,6 @@ function loadStatus(){j('/api/status').then(function(s){
  tb.innerHTML=h||'<span class="muted">No tickers configured</span>';}
 })}
 function kv(k,v){return '<div class="kv"><span class="muted">'+k+'</span><b>'+v+'</b></div>'}
-// WireGuard: one line that names the failure rather than just saying "down".
 // The handshake age is measured against the browser's clock, which is the one
 // we can trust to be right.
 // One line saying what the last radar poll actually did. An empty scope looks
@@ -731,17 +690,6 @@ function radarLine(r){
  return t;
 }
 
-function wgLine(w){
- if(!w)return '';
- if(!w.compiledIn)return 'WireGuard is not part of this build.';
- if(!w.enabled)return 'Tunnel off.';
- if(w.held)return 'Tunnel suspended after repeated reboots. Check the settings and save again to retry.';
- if(w.badConfig)return 'Tunnel not started: a field below is empty or malformed. Check the tunnel address, which needs a prefix like /32.';
- if(w.up){var a=w.lastHandshake?Math.max(0,Math.round(Date.now()/1000-w.lastHandshake)):null;
-  return 'Tunnel up'+(a!=null?', last handshake '+(a<120?a+'s':Math.round(a/60)+'m')+' ago':'')+'.'}
- if(!w.endpointIp)return 'Tunnel on, waiting for the endpoint name to resolve.';
- return 'Tunnel on, handshakes sent to '+w.endpointIp+' with no reply. Check that the peer lists this device\'s public key and that UDP to that port is open.';
-}
 function fmtUp(s){var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
  return (d?d+'d ':'')+(h?h+'h ':'')+m+'m'}
 function refreshNow(){j('/api/refresh',{method:'POST'}).then(function(){toast('Refreshing...');setTimeout(loadStatus,1500)})}

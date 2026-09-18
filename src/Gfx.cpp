@@ -7,8 +7,7 @@
 // **mode 3**. Arduino_GFX's stock Arduino_ST7789 forces SPI_MODE2 on the ESP8266
 // (wrong clock edge for this panel), so the controller never initializes and the
 // screen stays black even with the backlight on. Subclass begin() to force mode 3
-// — matching the known-good GeekMagic community firmwares. (On ESP32 the base
-// class already selects mode 3, so the override is harmless there.)
+// — matching the known-good GeekMagic community firmwares.
 
 // Runtime panel colour order, read by the setRotation override below. The board
 // header's TFT_BGR is the factory default for that variant; the Display tab can
@@ -79,17 +78,7 @@ void gfxBegin(const Settings& s) {
   platformAnalogWriteInit(TFT_BL);
   gfxSetBrightness(s.brightness, s.backlightInverted);
 
-#if defined(SMALLTV_ESP32C2) || defined(SMALLTV_ESP32)
-  // Hardware SPI via the Arduino SPI library (IDF spi_master driver) on explicit
-  // GPIOs. The register-level Arduino_ESP32SPI hangs in begin() on the C2, and
-  // Arduino_SWSPI's fast-IO path doesn't cover the C2 — Arduino_HWSPI uses the
-  // stock driver (what the working ESPHome config used) and honors SPI mode 3
-  // (see the subclass). Pins come from the board header; a TFT_CS of -1 means
-  // the panel's CS is tied to GND and is never toggled.
-  bus = new Arduino_HWSPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, GFX_NOT_DEFINED, &SPI);
-#else
   bus = new Arduino_HWSPI(TFT_DC, TFT_CS);   // ESP8266 HW-SPI (fixed SCLK/MOSI)
-#endif
   // IPS=true so the panel colors are not inverted. The ST7789(V) has 240x320
   // RAM against 240x240 glass, so the rotation 2/3 row offset (TFT_ROW_OFFSET2,
   // 80) matters: without it a 180°-rotated image slides into the dead band.
