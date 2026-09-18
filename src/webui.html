@@ -56,7 +56,6 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
  <button data-t="status" class="active">Status</button>
  <button data-t="wifi">WiFi</button>
  <button data-t="display">Display</button>
- <button data-t="ticker">Ticker</button>
  <button data-t="usage">Usage metrics</button>
  <button data-t="radar">Radar</button>
  <button data-t="ha">Home Assistant</button>
@@ -96,7 +95,6 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
   <div class="card"><h2>Mode</h2>
    <label>What this device shows</label>
    <select id="mode" onchange="modeChanged()">
-    <option value="stocks">Ticker</option>
     <option value="usage">Usage metrics</option>
     <option value="radar">Radar</option>
     <option value="ha">Home Assistant</option>
@@ -104,7 +102,6 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
    </select>
    <div id="carouselRow">
     <label>Switch mode every (s)</label><input id="carouselSec" type="number" min="5" max="3600">
-    <div class="chk"><input id="carouselTicker" type="checkbox"><label>Ticker</label></div>
     <div class="chk"><input id="carouselUsage" type="checkbox"><label>Usage metrics</label></div>
     <div class="chk"><input id="carouselRadar" type="checkbox"><label>Radar</label></div>
     <div class="chk"><input id="carouselHa" type="checkbox"><label>Home Assistant</label></div>
@@ -149,68 +146,6 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
    <label>Night brightness: <span id="nlVal"></span>% <span class="muted">(0 = screen off)</span></label>
    <input id="nightLevel" type="range" min="0" max="100" oninput="nlVal.textContent=this.value">
    <small class="hint">Needs internet once to set the clock over NTP (no on-screen clock, this just drives the schedule). While the window is active it overrides the brightness and auto-brightness above. Times are local to the selected timezone; DST is handled automatically. After a reboot the schedule resumes once the clock re-syncs, so the screen may show normal brightness for a few seconds.</small>
-  </div>
- </section>
-
- <!-- TICKER (feature) -->
- <section id="ticker" class="tab">
-  <div class="card"><h2>Live data</h2><div id="tickBox" class="muted">-</div>
-   <button class="btn sec" style="margin-top:10px" onclick="refreshNow()">Refresh data now</button>
-   <small class="hint">What the device holds right now for each ticker. Green is a good fetch, red means the last fetch failed and the device is retrying it on its own.</small></div>
-  <div class="card"><h2>Rotation &amp; data</h2>
-   <div class="row">
-    <div><label>Show each ticker (s)</label><input id="rotateSec" type="number" min="2" max="300"></div>
-    <div><label>Refresh data (s)</label><input id="pollSec" type="number" min="10" max="3600"></div>
-   </div>
-   <div class="row">
-    <div><label>Chart timeframe</label>
-     <select id="range">
-      <option value="1d">1 day</option><option value="5d">5 days</option>
-      <option value="1mo">1 month</option><option value="3mo">3 months</option>
-      <option value="6mo">6 months</option><option value="ytd">Year to date</option>
-      <option value="1y">1 year</option><option value="2y">2 years</option>
-      <option value="5y">5 years</option><option value="max">Max</option>
-     </select></div>
-    <div><label>Chart points</label><input id="points" type="number" min="0" max="60"></div>
-   </div>
-   <div class="row">
-    <div><label>Change &amp; % basis</label>
-     <select id="changeOnRange">
-      <option value="true">Chart timeframe</option>
-      <option value="false">1 day</option>
-     </select></div>
-   </div>
-   <small class="hint">Chart timeframe: the change, arrow, colors, and chart cover the same span, so they agree. Needs chart data (2+ points); without it the device falls back to the 1-day change. At 1 day it measures from the session's first data point, so overnight gaps are not counted. 1 day: the classic change vs the previous close, which can point the other way than a longer chart.</small>
-   <label>Webhook URL <span class="muted">(only for tickers set to Webhook)</span></label>
-   <input id="webhookUrl" type="url" placeholder="http://n8n.local:5678/webhook/stock">
-  </div>
-  <div class="card"><h2>Color scheme</h2>
-   <select id="colorInverted"><option value="false">Green up / Red down</option>
-    <option value="true">Red up / Green down</option></select>
-  </div>
-  <div class="card"><h2>What to show</h2>
-   <div class="chk"><input id="showName" type="checkbox"><label>Name / symbol</label></div>
-   <div class="chk"><input id="showPrice" type="checkbox"><label>Price</label></div>
-   <div class="chk"><input id="showChange" type="checkbox"><label>Change &amp; % change</label></div>
-   <div class="chk"><input id="showChart" type="checkbox"><label>Sparkline chart</label></div>
-   <div class="chk"><input id="showRangeLabel" type="checkbox"><label>Timeframe label</label></div>
-   <div class="chk"><input id="showUpdatedAgo" type="checkbox"><label>"Updated N s ago"</label></div>
-   <div class="chk"><input id="showPageDots" type="checkbox"><label>Rotation dots</label></div>
-   <div class="chk"><input id="showPortfolio" type="checkbox"><label>Position P/L &amp; portfolio page</label></div>
-  </div>
-  <div class="card"><h2>Tickers (rotate on screen)</h2>
-   <table id="symTable"></table>
-   <button class="btn sec" style="margin-top:10px" onclick="addSym()">+ Add ticker</button>
-   <small class="hint" id="symHint"></small>
-  </div>
-  <div class="card"><h2>cash.ch symbol finder</h2>
-   <label>Instrument <span class="muted">(paste a cash.ch link, ISIN, valor, or a name)</span></label>
-   <div class="row">
-    <input id="cashQ" type="text" placeholder="https://www.cash.ch/... or EU0009654078">
-    <button class="btn sec" style="flex:0 0 auto" onclick="cashFind()">Find</button>
-   </div>
-   <div id="cashRes"></div>
-   <small class="hint">Searches cash.ch from your browser and turns the result into the listing key the ticker needs. Click a match to add it as a ticker.</small>
   </div>
  </section>
 
@@ -333,11 +268,6 @@ document.querySelectorAll('nav button').forEach(function(b){b.onclick=function()
  b.classList.add('active');$(b.dataset.t).classList.add('active');
 }});
 
-// field groups by their location in the nested config
-var T_TEXT=['webhookUrl','range'];                   // ticker strings
-var T_NUM=['rotateSec','pollSec','points'];          // ticker numbers
-var T_BOOL=['showName','showPrice','showChange','showChart','showRangeLabel','showUpdatedAgo','showPageDots','showPortfolio'];
-
 // IANA -> POSIX TZ. The device stores/uses the POSIX rule; this map lives in the
 // browser so the firmware carries no tz database (same idea as the cash finder).
 var TZMAP={
@@ -369,8 +299,8 @@ var TZMAP={
 function fillTz(){var s=$('tz');if(!s)return;var keys=Object.keys(TZMAP).filter(function(k){return k!==''});
  keys.sort();s.innerHTML='<option value="">UTC</option>'+keys.map(function(k){return '<option value="'+k+'">'+k+'</option>'}).join('');}
 
-var MODEOPT={ticker:'stocks',usage:'usage',radar:'radar',ha:'ha'};
-var CAROPT={ticker:'carouselTicker',usage:'carouselUsage',radar:'carouselRadar',ha:'carouselHa'};
+var MODEOPT={usage:'usage',radar:'radar',ha:'ha'};
+var CAROPT={usage:'carouselUsage',radar:'carouselRadar',ha:'carouselHa'};
 function hideFeat(name){
  var b=document.querySelector('nav button[data-t="'+name+'"]'); if(b)b.remove();
  var sec=$(name); if(sec)sec.remove();
@@ -393,8 +323,8 @@ function setGain(id,lab,v){var n=(v!=null?v:100);sv(id,n);var e=$(lab);if(e)e.te
 function resetColors(){setGain('rGain','rgVal',100);setGain('gGain','ggVal',100);setGain('bGain','bgVal',100);
  toast('Gains reset — press Save settings to apply')}
 function loadConfig(){return j('/api/config').then(function(c){C=c;
- var f=c.features||{}; ['ticker','usage','radar','ha'].forEach(function(k){if(f[k]===false)hideFeat(k)});
- var t=c.ticker||{}, u=c.usage||{};
+ var f=c.features||{}; ['usage','radar','ha'].forEach(function(k){if(f[k]===false)hideFeat(k)});
+ var u=c.usage||{};
  // shared
  ['apSsid','hostname'].forEach(function(k){$(k).value=c[k]!=null?c[k]:''});
  renderWifi(c.wifi||(c.staSsid?[{ssid:c.staSsid,passSet:c.staPassSet}]:[]));
@@ -415,22 +345,15 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
  sv('tz',ck.tz||''); sc('nightEnabled',!!ck.nightEnabled);
  sv('nightStart',ck.nightStart||'22:00'); sv('nightEnd',ck.nightEnd||'07:00');
  sv('nightLevel',ck.nightLevel!=null?ck.nightLevel:0); $('nlVal')&&($('nlVal').textContent=(ck.nightLevel!=null?ck.nightLevel:0));
- $('mode').value=c.mode||'stocks'; modeChanged();
+ $('mode').value=c.mode||'usage'; modeChanged();
  sv('carouselSec',c.carouselSec||30);
- sc('carouselTicker',c.carouselTicker!==false); sc('carouselUsage',c.carouselUsage!==false); sc('carouselRadar',c.carouselRadar!==false);
+ sc('carouselUsage',c.carouselUsage!==false); sc('carouselRadar',c.carouselRadar!==false);
  sc('carouselHa',c.carouselHa!==false);
  // HA / MQTT slice
  var h=c.ha||{};
  sv('haBrokerHost',h.brokerHost); sv('haBrokerPort',h.brokerPort||1883);
  sv('haBrokerUser',h.brokerUser); sv('haDwellSec',h.dwellSec!=null?h.dwellSec:15);
  var hp=$('haBrokerPass'); if(hp){hp.value='';hp.placeholder=h.passSet?'(unchanged)':'(optional)';}
- // ticker slice
- T_TEXT.forEach(function(k){sv(k,t[k])});
- T_NUM.forEach(function(k){sv(k,t[k])});
- T_BOOL.forEach(function(k){sc(k,t[k])});
- sv('colorInverted',t.colorInverted?'true':'false');
- sv('changeOnRange',t.changeOnRange===false?'false':'true');
- renderSyms(t.symbols||[]); symHintFor('yahoo');
  // usage slice
  sv('usageUrl',u.usageUrl);
  sv('usagePollSec',u.pollSec);
@@ -450,46 +373,10 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
 })}
 
 function esc(s){return (''+(s==null?'':s)).replace(/[<>&"]/g,function(c){return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]})}
-function symHintFor(v){var h=$('symHint');if(!h)return;
- h.innerHTML=(v==='cash'
-  ?'<b>cash.ch</b>: fetched directly by the device. The symbol is a listing key like <code>123456789-246-333</code>; the finder below turns a cash.ch link, ISIN, or name into one. <b>On this ESP8266</b>, cash.ch\'s TLS is tight; if it proves unstable, use the <b>GitHub</b> source for the same listing key instead.'
-  :v==='github'
-  ?'<b>GitHub</b>: reads a listing key\'s quote from a small static JSON published to a repo\'s <code>data</code> branch (a proxy for cash.ch on chips that can\'t reach it directly). The symbol is the cash.ch listing key. You publish the files yourself from a fork &mdash; the repo ships the example fetcher (<code>fetch-quotes.mjs</code> + <code>quotes-config.json</code>); see the docs.'
-  :v==='webhook'
-  ?'<b>Webhook</b>: the device asks the webhook URL above and passes the symbol through as-is, so use whatever your endpoint understands.'
-  :'<b>Yahoo Finance</b>: fetched directly by the device. Use Yahoo symbols: <code>AAPL</code>, <code>NESN.SW</code> (Swiss stocks end in <code>.SW</code>), <code>BTC-USD</code>, <code>EURUSD=X</code>.')
-  +' Name is optional; if set it overrides the source\'s name. Qty and per-unit cost are optional too: set both and the ticker shows your P/L plus a portfolio summary page.';}
-
-// cash.ch symbol finder: runs in YOUR browser (cash.ch answers cross-origin),
-// the device itself is not involved in the search.
-function cashFind(){var q=gv('cashQ').trim();if(!q){toast('Paste a link, ISIN, or name first');return}
- var m=q.match(/^https?:\/\/\S*?(\d{5,12})/); if(m)q=m[1];   // a cash.ch link carries the valor in its slug
- $('cashRes').innerHTML='<div class="muted">Searching cash.ch...</div>';
- var gq='query{textSearch(publication:CASH,search:"'+q.replace(/["\\]/g,'')+'",sort:Relevance,sortOrder:Descending,limit:10,offset:0){'+
-  'equity{items{...on Equity{listingId mName market mCur mIsin}}} fund{items{...on Fund{listingId mName market mCur mIsin}}} '+
-  'derivative{items{...on Derivative{listingId mName market mCur mIsin}}} bond{items{...on Bond{listingId mName market mCur mIsin}}} '+
-  'index{items{...on Index{listingId mName market mCur}}} diverse{items{...on Diverse{listingId mName market mCur mIsin}}} '+
-  'cryptoCurrency{items{...on CryptoCurrency{listingId mName market mCur}}}}}';
- fetch('https://www.cash.ch/_/api/graphql/prod?query='+encodeURIComponent(gq))
- .then(function(r){return r.json()})
- .then(function(d){var out=[];var b=(d.data&&d.data.textSearch)||{};
-  ['equity','derivative','fund','bond','index','diverse','cryptoCurrency'].forEach(function(k){
-   ((b[k]&&b[k].items)||[]).forEach(function(it){if(it&&it.listingId)out.push(it)});});
-  if(!out.length){$('cashRes').innerHTML='<div class="muted">Nothing found on cash.ch</div>';return}
-  var h='';out.slice(0,10).forEach(function(it){
-   h+='<div class="net" onclick="cashPick(this.dataset.k)" data-k="'+esc(it.listingId)+'"><span>'+esc(it.mName||'?')+
-    ' <span class="muted">'+esc(it.mIsin||'')+'</span></span><span class="muted">'+esc(it.market||'')+' '+esc(it.mCur||'')+'</span></div>';});
-  $('cashRes').innerHTML=h;
- }).catch(function(){$('cashRes').innerHTML='<div class="muted">cash.ch not reachable from this browser</div>'});}
-function cashPick(k){var rows=document.querySelectorAll('#symTable tr');var tr=null;
- for(var i=0;i<rows.length;i++){if(!rows[i].querySelector('.s').value.trim()){tr=rows[i];break}}
- if(!tr){if(rows.length>=8){toast('Max 8');return}addRow({});tr=$('symTable').lastChild}
- tr.querySelector('.s').value=k;tr.querySelector('.src').value='cash';symHintFor('cash');
- toast('Added '+k+'. Set a name, then Save.');}
 function collect(){
  var o={mode:gv('mode'),
   carouselSec:parseInt(gv('carouselSec'))||30,
-  carouselTicker:gc('carouselTicker'), carouselUsage:gc('carouselUsage'), carouselRadar:gc('carouselRadar'),
+  carouselUsage:gc('carouselUsage'), carouselRadar:gc('carouselRadar'),
   carouselHa:gc('carouselHa'),
   brightness:parseInt(gv('brightness'))||0,
   rotation:parseInt(gv('rotation')),
@@ -508,20 +395,6 @@ function collect(){
  // blank field unconditionally used to wipe the stored password on every save.
  if(gc('apOpen')) o.apPass='';
  else { var _ap=gv('apPass'); if(_ap) o.apPass=_ap; }
- // ticker slice (only if compiled in)
- if($('ticker')){
-  var t={colorInverted:gv('colorInverted')==='true',changeOnRange:gv('changeOnRange')==='true'};
-  T_TEXT.forEach(function(k){t[k]=gv(k)});
-  T_NUM.forEach(function(k){t[k]=parseInt(gv(k))||0});
-  T_BOOL.forEach(function(k){t[k]=gc(k)});
-  t.symbols=[];
-  document.querySelectorAll('#symTable tr').forEach(function(tr){
-   var s=tr.querySelector('.s').value.trim();
-   if(s)t.symbols.push({symbol:s,name:tr.querySelector('.n').value.trim(),source:tr.querySelector('.src').value,
-    qty:parseFloat(tr.querySelector('.q').value)||0,cost:parseFloat(tr.querySelector('.c').value)||0});
-  });
-  o.ticker=t;
- }
  // usage slice
  if($('usage')) o.usage={usageUrl:gv('usageUrl'), pollSec:parseInt(gv('usagePollSec'))||0,
   rotateSec:parseInt(gv('usageRotateSec'))||30,
@@ -568,20 +441,6 @@ function scanPick(ssid){var rows=document.querySelectorAll('#wifiTable tr');var 
  if(!tr){if(rows.length>=4){toast('Max 4');return}addWifiRow({});tr=$('wifiTable').lastChild}
  tr.querySelector('.ws').value=ssid;tr.querySelector('.wp').focus();}
 
-// symbols
-function renderSyms(arr){var t=$('symTable');if(!t)return;t.innerHTML='';arr.forEach(addRow);if(!arr.length)addRow({})}
-function addRow(o){var t=$('symTable');var tr=document.createElement('tr');tr.className='symrow';
- tr.innerHTML='<td style="width:24%"><input class="s" type="text" placeholder="AAPL" value="'+esc(o.symbol||'')+'"></td>'+
-  '<td><input class="n" type="text" placeholder="name" value="'+esc(o.name||'')+'"></td>'+
-  '<td style="width:118px"><select class="src" onchange="symHintFor(this.value)">'+
-   '<option value="yahoo">Yahoo Finance</option><option value="cash">cash.ch</option><option value="github">GitHub</option><option value="webhook">Webhook</option></select></td>'+
-  '<td style="width:58px"><input class="q" type="number" step="any" min="0" placeholder="qty" value="'+(o.qty>0?o.qty:'')+'"></td>'+
-  '<td style="width:70px"><input class="c" type="number" step="any" min="0" placeholder="cost" value="'+(o.cost>0?o.cost:'')+'"></td>'+
-  '<td style="width:34px"><button class="btn sec" style="padding:6px 10px" onclick="this.closest(\'tr\').remove()">&times;</button></td>';
- tr.querySelector('.src').value=o.source||'yahoo';
- t.appendChild(tr);}
-function addSym(){if(document.querySelectorAll('#symTable tr').length>=8){toast('Max 8');return}addRow({})}
-
 // wifi scan
 function scan(){$('scanList').innerHTML='<div class="muted">Scanning...</div>';
  j('/api/scan').then(function(l){var h='';l.sort(function(a,b){return b.rssi-a.rssi});
@@ -608,16 +467,6 @@ function loadStatus(){j('/api/status').then(function(s){
   kv('Free heap',s.heap+' B'+(s.maxblk?' ('+s.maxblk+' B largest block)':''))+
   kv('Uptime',fmtUp(s.uptime))+kv('Last reset',s.reset||'-')+
   (s.radar?kv('Radar',radarLine(s.radar)):'');
- var tb=$('tickBox');
- if(tb){var h='';(s.tickers||[]).forEach(function(t){
-  var c=t.error?'var(--red)':(t.valid?'var(--acc)':'var(--mut)');
-  var pc=t.changePct!=null?(t.changePct>=0?'+':'')+t.changePct.toFixed(2)+'%':'';
-  var st=t.valid?(t.price+'  '+pc):(t.error?'error':'...');
-  // A failed ticker keeps its last good price on screen, so say when the next
-  // attempt is due rather than leaving the row looking simply broken.
-  if(t.error&&t.retryIn!=null)st+=' <span class="muted">(retry '+t.retryIn+'s)</span>';
-  h+='<div class="kv"><b style="color:'+c+'">'+t.symbol+'</b><span>'+st+'</span></div>';});
- tb.innerHTML=h||'<span class="muted">No tickers configured</span>';}
 })}
 function kv(k,v){return '<div class="kv"><span class="muted">'+k+'</span><b>'+v+'</b></div>'}
 function radarLine(r){
@@ -631,8 +480,6 @@ function radarLine(r){
 
 function fmtUp(s){var d=Math.floor(s/86400),h=Math.floor(s%86400/3600),m=Math.floor(s%3600/60);
  return (d?d+'d ':'')+(h?h+'h ':'')+m+'m'}
-function refreshNow(){j('/api/refresh',{method:'POST'}).then(function(){toast('Refreshing...');setTimeout(loadStatus,1500)})}
-
 // HA screens purge: wipes the device store and the broker's retained copies.
 function haClearScreens(){if(!confirm('Clear all HA screens on the device and on the broker?'))return;
  j('/api/ha/clear',{method:'POST'}).then(function(r){

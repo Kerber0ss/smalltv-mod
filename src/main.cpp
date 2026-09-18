@@ -2,7 +2,6 @@
 //
 // Three features, each a self-contained DisplayMode (see Mode.h), picked in the
 // web UI and dispatched from the registry below:
-//   - Ticker (features/ticker):  stock/crypto price, % change, sparkline.
 //   - Usage  (features/usage):   Claude 5h/7d usage bars + animated mascot.
 //   - Radar  (features/radar):   live regional air-alert status.
 // Shared plumbing (WiFi, web UI, OTA, display core, settings) lives at src root.
@@ -22,9 +21,6 @@
 #include "NotifyMode.h"
 #endif
 
-#if WITH_TICKER
-#include "TickerMode.h"
-#endif
 #if WITH_USAGE
 #include "UsageMode.h"
 #endif
@@ -40,9 +36,6 @@
 // The compiled-in features, in display order. main.cpp holds no per-feature
 // state of its own — each mode owns its fetch/render/dirty tracking.
 static DisplayMode* kModes[] = {
-#if WITH_TICKER
-  &g_tickerMode,
-#endif
 #if WITH_USAGE
   &g_usageMode,
 #endif
@@ -63,7 +56,6 @@ static uint32_t g_carSwitch = 0;
 
 static bool carouselHas(const Settings& s, const DisplayMode* m) {
   switch (m->modeConst()) {
-    case MODE_STOCKS: return s.carouselTicker;
     case MODE_USAGE:  return s.carouselUsage;
     case MODE_RADAR:  return s.carouselRadar;
 #if WITH_HA
@@ -184,7 +176,7 @@ void setup() {
 
   Serial.println("[boot] net");
   netBegin(g_settings, bootProgress);
-  // Arm SNTP only for night mode, so a ticker-only device keeps TLS headroom.
+  // Arm SNTP only for night mode, so idle devices keep TLS headroom.
   // Skip it after a crash so a fault here cannot boot-loop before recovery UI.
   if (!g_safeMode) clockReapply(g_settings);
 

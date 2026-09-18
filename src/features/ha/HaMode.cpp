@@ -1,4 +1,4 @@
-// HaMode.cpp — see HaMode.h. Dirty-flag render pattern follows TickerMode.
+// HaMode.cpp — see HaMode.h. Dirty-flag render pattern avoids redundant redraws.
 #include "HaMode.h"
 #if WITH_HA
 #include <Arduino_GFX_Library.h>
@@ -80,7 +80,7 @@ static void renderScreen(const HaScreen& sc, uint8_t pageIndex, uint8_t pageCoun
     }
   }
 
-  // Page dots like TickerMode, only once there is something to rotate through.
+  // Page dots appear only once there is something to rotate through.
   if (pageCount > 1) {
     int total = pageCount * 10 - 4;
     int x0 = (TFT_WIDTH - total) / 2;

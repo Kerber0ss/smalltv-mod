@@ -7,7 +7,7 @@
 // Firmware identity
 // ---------------------------------------------------------------------------
 #define FW_NAME     "smalltv-mod"
-#define FW_VERSION  "2.17.1"
+#define FW_VERSION  "2.18.0"
 
 // Project / update references (shown in the web UI; used by the GitHub self-update)
 #define REPO_URL      "https://github.com/Kerber0ss/smalltv-mod"
@@ -57,12 +57,7 @@
 // ---------------------------------------------------------------------------
 // Limits (bound RAM usage on the ESP8266)
 // ---------------------------------------------------------------------------
-#define MAX_SYMBOLS       8    // max tickers in the rotation
-#define MAX_SYMBOL_LEN   24    // e.g. "BTC-USD", cash.ch key "123456789-246-333"
 #define MAX_WIFI_NETS     4    // saved WiFi networks; strongest visible wins at boot
-#define MAX_NAME_LEN     20    // friendly name shown on screen
-#define MAX_SPARK_POINTS 60    // sparkline samples kept per symbol
-#define MAX_URL_LEN     200    // webhook base URL
 
 // ---------------------------------------------------------------------------
 // Web UI password (off by default). Digest auth, so the password itself is
@@ -75,17 +70,15 @@
 
 // ---------------------------------------------------------------------------
 // Display mode — what the device shows
-//   0 = stock / crypto ticker (per-symbol source, see SRC_* below)
-//   1 = Claude usage meter (mascot + 5h/7d usage bars, fed by the daemon/)
-//   2 = air-alert radar
-//   3 = carousel: rotate through the ticked features on a timer
+//   0 = Claude usage meter (mascot + 5h/7d usage bars, fed by the daemon/)
+//   1 = air-alert radar
+//   2 = carousel: rotate through the selected features on a timer
 // ---------------------------------------------------------------------------
-#define MODE_STOCKS    0
-#define MODE_USAGE     1
-#define MODE_RADAR     2
-#define MODE_CAROUSEL  3
-#define MODE_NOTIFY    4             // transient overlay: armed over HTTP, never persisted
-#define MODE_HA        5             // Home Assistant screens pushed over MQTT
+#define MODE_USAGE     0
+#define MODE_RADAR     1
+#define MODE_CAROUSEL  2
+#define MODE_NOTIFY    3             // transient overlay: armed over HTTP, never persisted
+#define MODE_HA        4             // Home Assistant screens pushed over MQTT
 #define DEFAULT_MODE MODE_USAGE
 #define DEFAULT_CAROUSEL_SEC 30      // per-mode dwell in carousel
 
@@ -151,9 +144,6 @@
 // build drops one by setting e.g. -D WITH_RADAR=0 in a PlatformIO env, which
 // omits that feature's module from the registry and its web UI section.
 // ---------------------------------------------------------------------------
-#ifndef WITH_TICKER
-#define WITH_TICKER 1
-#endif
 #ifndef WITH_USAGE
 #define WITH_USAGE 1
 #endif
@@ -171,58 +161,6 @@
 // stopped, network down) the screen switches from the stats to the idle mascot
 // animation. Effective timeout also scales with the poll period (see main.cpp).
 #define USAGE_STALE_GRACE_MS  20000UL
-
-// ---------------------------------------------------------------------------
-// Data source (stock mode)
-//   0 = custom webhook (n8n / Node-RED / your own HTTP endpoint)
-//   1 = Yahoo Finance, fetched directly by the device (no backend needed)
-//   2 = cash.ch, fetched directly by the device (Swiss instruments, incl.
-//       off-exchange structured products that Yahoo doesn't carry)
-// ---------------------------------------------------------------------------
-#define SRC_WEBHOOK  0
-#define SRC_YAHOO    1
-#define SRC_CASH     2
-#define SRC_GHUB     3   // static JSON read from a repo's data branch (see below)
-#define DEFAULT_SOURCE  SRC_YAHOO            // works out of the box, no server
-
-// Yahoo Finance public chart endpoint. A browser-like User-Agent is required —
-// requests with an empty UA are rejected with HTTP 429. TLS records from Yahoo
-// are <=~1.3 KB, so the 4 KB BearSSL receive buffer in StockClient is plenty.
-// query1/query2 are interchangeable mirrors; we fall back to the second on a
-// transient failure (a single back-to-back HTTPS fetch occasionally drops).
-#define YAHOO_CHART_HOST1 "query1.finance.yahoo.com"
-#define YAHOO_CHART_HOST2 "query2.finance.yahoo.com"
-#define YAHOO_CHART_PATH  "/v8/finance/chart/"
-#define YAHOO_USER_AGENT  "Mozilla/5.0 (SmallTV)"
-
-// cash.ch public GraphQL endpoint. The device sends two small hand-written
-// GraphQL queries per symbol as plain GETs (?query=...): a ~200 B quote and a
-// slim daily-close series for the sparkline. No API key, no cookies, no
-// required headers. The symbol is the cash.ch listing key
-// `valor-marketId-currencyId` (see the docs for how to find it).
-// cash.ch's CDN requires ECDHE. The BearSSL handshake is memory-tight, so the cash
-// path is shaped to fit: only cash.ch is offered ECDHE (Yahoo and the GitHub
-// source are pinned to the cheap static-RSA suites), the connection uses 512 B
-// buffers + TLS session resumption, and StockClient skips a fetch unless a
-// large enough contiguous heap block is free. The GitHub source below is a
-// zero-crash fallback if a device ever proves too tight for the direct path.
-
-// GitHub source (SRC_GHUB): static quote JSON published to a git repo's `data`
-// branch and read from raw.githubusercontent.com, which — unlike cash.ch —
-// still accepts the ESP8266's static-RSA handshake (the same one GitHub
-// self-update and Yahoo use). The file is the same JSON the webhook parser
-// accepts, and the symbol is the cash.ch listing key. You publish the files
-// yourself from a fork: .github/scripts/fetch-quotes.mjs + quotes-config.json
-// are the example fetcher and symbol list, and the docs
-// (reference/data-sources) show an example scheduled workflow that pushes them
-// to a `data` branch — point REPO_OWNER/REPO_NAME at that fork. raw sends a
-// ~4 KB certificate record and does not negotiate MFLN, so this path uses a
-// larger TLS buffer.
-#define GH_QUOTES_BASE "https://raw.githubusercontent.com/" REPO_OWNER "/" REPO_NAME "/data/quotes/"
-#define GH_QUOTES_RXBUF 5120
-#define CASH_GQL_HOST   "www.cash.ch"
-#define CASH_GQL_PATH   "/_/api/graphql/prod"
-#define CASH_USER_AGENT "Mozilla/5.0 (SmallTV)"
 
 // ---------------------------------------------------------------------------
 // Air-alert radar (MODE_RADAR). The API is region-filtered before it reaches
@@ -243,15 +181,6 @@
 #define DEFAULT_AP_PASS      ""              // empty => open AP
 #define DEFAULT_HOSTNAME     "smalltv"
 #define DEFAULT_POLL_SEC      120            // how often to refresh data
-// Per-symbol retry after a failed or skipped fetch: the first retry comes after
-// TICKER_RETRY_SEC and then doubles (12s, 24s, 48s, 96s) for TICKER_RETRY_MAX
-// steps, after which the symbol settles at the poll interval and keeps retrying
-// there. A retry is never scheduled further out than the poll interval.
-#define TICKER_RETRY_SEC       12
-#define TICKER_RETRY_MAX        4
-#define DEFAULT_ROTATE_SEC    10             // how long each symbol is shown
-#define DEFAULT_RANGE        "1d"            // chart timeframe (e.g. 1d/5d/1mo/1y)
-#define DEFAULT_POINTS        48             // sparkline points requested
 #define DEFAULT_BRIGHTNESS    90             // 0..100 %
 #define DEFAULT_HTTP_TIMEOUT  8000           // ms per request
 

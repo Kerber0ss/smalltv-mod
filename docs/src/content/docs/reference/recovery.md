@@ -7,4 +7,4 @@ Factory reset in the System tab wipes settings and returns to SETUP MODE. A fail
 
 The device uses 2.4 GHz WiFi and a small ESP8266 heap. Prefer plain HTTP for LAN webhooks when TLS becomes unreliable.
 
-Credits: GeekMagic SmallTV, Arduino_GFX, ArduinoJson, PubSubClient, adsb.lol, clawdmeter, and claudepix.
+Credits: GeekMagic SmallTV, Arduino_GFX, ArduinoJson, PubSubClient, clawdmeter, claudepix, and radar.syslog.pp.ua.

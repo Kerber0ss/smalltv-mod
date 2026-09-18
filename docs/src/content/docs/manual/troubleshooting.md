@@ -11,9 +11,9 @@ Confirm the device has power, then open its settings page and check brightness, 
 
 Use a 2.4 GHz network. If the saved networks cannot be joined, connect to `SmallTV-Setup` and save the credentials again.
 
-## Ticker or radar is empty
+## Radar is empty
 
-The ESP8266 has limited heap for HTTPS. Check the Status tab for free heap and the Radar diagnostic. For cash.ch or radar feeds that cannot complete TLS, use the GitHub or LAN webhook source.
+The ESP8266 has limited heap for HTTPS. Check the Status tab for free heap and the Radar diagnostic, then verify that the selected region matches the API's region key.
 
 ## Update failed
 

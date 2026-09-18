@@ -6,9 +6,6 @@
 #include "Net.h"
 #include "Gfx.h"
 #include "OtaUpdate.h"
-#if WITH_TICKER
-#include "StockClient.h"
-#endif
 #include "UsageClient.h"
 #if WITH_RADAR
 #include "RadarClient.h"
@@ -77,7 +74,6 @@ static void handleGetConfig() {
   settingsToJson(*S, root, /*includeSecrets=*/false);
   // Which features are compiled in (so a lean build hides the tabs it dropped).
   JsonObject feat = root["features"].to<JsonObject>();
-  feat["ticker"] = (bool)WITH_TICKER;
   feat["usage"]  = (bool)WITH_USAGE;
   feat["radar"]  = (bool)WITH_RADAR;
   feat["ha"]     = (bool)WITH_HA;
@@ -110,27 +106,6 @@ static void handleStatus() {
   o["night"]     = clockNightActive();   // dimming now
   o["nightHeld"] = clockNightHeld();      // in the window but waiting for a fresh NTP sync
   o["clockFresh"] = clockTrusted();       // last NTP sync within the trust window
-
-#if WITH_TICKER
-  JsonArray arr = o["tickers"].to<JsonArray>();
-  for (uint8_t i = 0; i < stocksCount(); i++) {
-    const StockData& d = stockAt(i);
-    JsonObject t = arr.add<JsonObject>();
-    t["symbol"] = d.symbol;
-    t["valid"] = d.valid;
-    t["error"] = d.error;
-    if (d.error) t["retryIn"] = stockRetryInSec(i);   // seconds to the next attempt
-    if (d.valid) {
-      t["price"] = d.price;
-      float chg, pct;
-      bool onRange = false;
-      if (stockDisplayChange(d, S->ticker, chg, pct, &onRange)) {
-        t["changePct"] = pct;                       // as displayed on the device
-        t["basis"] = onRange ? "range" : "day";     // which basis that was
-      }
-    }
-  }
-#endif
 
 #if WITH_RADAR
   {
@@ -252,14 +227,6 @@ static void handleImport() {
   saveSettings(*S);
   server.send(200, "application/json", "{\"ok\":true,\"reboot\":true}");
   scheduleReboot(800);
-}
-
-static void handleRefresh() {
-  if (!requireAuth()) return;
-#if WITH_TICKER
-  stocksForceRefresh();
-#endif
-  server.send(200, "application/json", "{\"ok\":true}");
 }
 
 #if WITH_HA
@@ -442,7 +409,6 @@ void webPortalBegin(Settings& settings) {
   server.on("/api/scan", HTTP_GET, handleScan);
   server.on("/api/reboot", HTTP_POST, handleReboot);
   server.on("/api/factory", HTTP_POST, handleFactory);
-  server.on("/api/refresh", HTTP_POST, handleRefresh);
   server.on("/api/export", HTTP_GET, handleExport);
   server.on("/api/import", HTTP_POST, handleImport);
   server.on("/api/checkupdate", HTTP_GET, handleCheckUpdate);

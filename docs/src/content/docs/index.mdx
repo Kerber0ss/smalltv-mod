@@ -1,64 +1,44 @@
 ---
 title: smalltv-mod
-description: Open-source firmware for the GeekMagic SmallTV (ESP8266). Stock ticker, Claude usage meter, and plane radar in one image.
+description: Open-source ESP8266 firmware for GeekMagic SmallTV with air-alert Radar and usage screens.
 template: splash
 hero:
-  tagline: One firmware, three modes. Turn a SmallTV cube into a ticker, a Claude usage meter, or a plane radar.
+  tagline: Ukraine air alerts, Claude and Codex usage, and Home Assistant screens on a SmallTV cube.
   image:
     file: ../../assets/logo.svg
   actions:
     - text: Get started
-      link: /smalltv-mod/getting-started/hardware/
+      link: /getting-started/hardware/
       icon: right-arrow
     - text: View on GitHub
-      link: https://github.com/giovi321/smalltv-mod
+      link: https://github.com/Kerber0ss/smalltv-mod
       icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
 
-The GeekMagic SmallTV is a small cube with a 1.54" colour screen, an ESP inside, and a USB-C port. This firmware replaces the stock apps with three modes you switch between in a built-in web UI, and it updates over WiFi. The web UI header shows a chip badge for the board it's running on, and an optional scheduled night mode dims or turns off the backlight on an NTP clock and timezone you pick, without taking the device offline.
+The GeekMagic SmallTV is a 1.54-inch ESP8266 cube. This firmware is configured from its built-in web UI and updates over WiFi.
 
-![The SmallTV running its three modes](/smalltv-mod/assets/screen.svg)
-
-## The three modes
+## Screens
 
 <CardGrid>
-  <Card title="Stock and crypto ticker" icon="seti:default">
-    Price, change, percent change, and a sparkline for up to 8 rotating symbols. Data from Yahoo Finance with no backend, or your own webhook.
+  <Card title="Air-alert Radar" icon="rocket">
+    Regional alert level, selected district or city, and current drone and missile counts from radar.syslog.pp.ua.
   </Card>
   <Card title="Usage meter for Claude and Codex" icon="seti:crystal">
-    An animated mascot plus 5-hour and weekly usage bars with reset countdowns, fed over WiFi by a local PC client.
+    Usage bars and reset countdowns, received over WiFi from a local PC client.
   </Card>
-  <Card title="Plane radar" icon="rocket">
-    A scope centred on your location with nearby aircraft, headings, speed vectors, and callsigns, from the free adsb.lol or adsb.fi feeds or a LAN webhook.
+  <Card title="Home Assistant and notifications" icon="seti:default">
+    MQTT draw-list screens and temporary notification overlays.
   </Card>
-</CardGrid>
-
-## More than the three modes
-
-A [Home Assistant screen](/smalltv-mod/features/ha/) arrives over MQTT as a JSON draw list and the device shows it as a full 240×240 screen. A [notification](/smalltv-mod/features/notify/) takes the panel for a few seconds when a script pushes one over HTTP, then puts back whatever was showing. And the [ticker](/smalltv-mod/features/ticker/) adds a portfolio summary page to its rotation once a symbol carries a quantity and a cost basis.
-
-![A Home Assistant screen pushed over MQTT, a notification overlay, and the ticker's portfolio summary](/smalltv-mod/assets/screen2.svg)
-
-## Supported hardware
-
-This firmware builds for the GeekMagic SmallTV with an ESP8266.
-
-<CardGrid>
-  <LinkCard title="SmallTV (ESP8266)" href="/smalltv-mod/getting-started/hardware/" description="ESP-12F. Flashes over the air from the stock web UI." />
 </CardGrid>
 
 ## Start here
 
 <CardGrid>
-  <LinkCard title="Hardware" href="/smalltv-mod/getting-started/hardware/" />
-  <LinkCard title="Flashing" href="/smalltv-mod/getting-started/flashing/" />
-  <LinkCard title="First-time setup" href="/smalltv-mod/getting-started/setup/" />
-  <LinkCard title="Building from source" href="/smalltv-mod/reference/building/" />
+  <LinkCard title="Hardware" href="/getting-started/hardware/" />
+  <LinkCard title="Flashing" href="/getting-started/flashing/" />
+  <LinkCard title="First-time setup" href="/getting-started/setup/" />
+  <LinkCard title="Radar" href="/features/radar/" />
 </CardGrid>
-
-## Received one as a gift?
-
-The [user manual](/smalltv-mod/manual/quick-start/) skips the technical background and walks through plugging it in, joining WiFi, and everyday use in plain language, no prior knowledge assumed.

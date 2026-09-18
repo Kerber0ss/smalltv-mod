@@ -1,59 +1,17 @@
 // Settings.h — persisted configuration (LittleFS /config.json)
 //
 // Layout is segmented per feature: shared device/network fields live at the top
-// level, and each feature owns a nested settings slice (ticker / usage / radar).
-// config.json mirrors this: { ..shared.., "ticker":{...}, "usage":{...} }.
-// The JSON reader also still accepts the old flat layout, so a device upgrading
-// from the pre-segmentation firmware keeps its WiFi + symbols; the next save
-// rewrites it nested.
+// level, and each feature owns a nested settings slice (usage / radar / HA).
 #pragma once
 #include <Arduino.h>
 #include <ArduinoJson.h>
 #include "config.h"
-
-struct SymbolCfg {
-  char    symbol[MAX_SYMBOL_LEN];
-  char    name[MAX_NAME_LEN];
-  uint8_t source;     // SRC_* per ticker (see config.h)
-  float   qty;        // position size; 0 = not a position
-  float   cost;       // cost basis per unit, in the instrument's currency
-};
 
 // One saved WiFi station network. The device keeps up to MAX_WIFI_NETS and
 // joins the strongest visible one at boot (hidden SSIDs are tried last).
 struct WifiCred {
   String ssid;
   String pass;
-};
-
-// ---- Ticker (stock/crypto) feature slice ----------------------------------
-// The data source is per symbol (SymbolCfg.source); webhookUrl is shared by
-// every symbol whose source is SRC_WEBHOOK.
-struct TickerSettings {
-  String   webhookUrl;    // custom webhook base URL (used by webhook symbols)
-  String   range;         // chart timeframe token (e.g. "1d", "5d", "1mo", "1y")
-  uint16_t points;        // sparkline points requested
-  uint16_t pollSec;       // refresh period
-  uint16_t rotateSec;     // per-symbol on-screen time
-  bool     colorInverted; // false: up=green/down=red ; true: swapped
-  bool     changeOnRange; // true: change/% over the chart timeframe; false: provider's 1-day change
-
-  // What to show
-  bool showName;
-  bool showPrice;
-  bool showChange;
-  bool showChart;
-  bool showRangeLabel;
-  bool showUpdatedAgo;
-  bool showPageDots;
-  bool showPortfolio;   // P/L line on position tickers + portfolio summary page
-
-  SymbolCfg symbols[MAX_SYMBOLS];
-  uint8_t   symbolCount;
-
-  void setDefaults();
-  void toJson(JsonObject o) const;
-  void fromJson(JsonObjectConst o);   // applies only the keys present
 };
 
 // ---- Usage feature slice ---------------------------------------------------
@@ -155,11 +113,11 @@ struct Settings {
   String hostname;      // mDNS name => http://<hostname>.local
 
   // --- Active feature ---
-  uint8_t mode;         // MODE_STOCKS / MODE_USAGE / MODE_RADAR / MODE_CAROUSEL / MODE_HA
+  uint8_t mode;         // MODE_USAGE / MODE_RADAR / MODE_CAROUSEL / MODE_HA
 
   // --- Carousel (mode == MODE_CAROUSEL): dwell + which features rotate ---
   uint16_t carouselSec;
-  bool carouselTicker, carouselUsage, carouselRadar, carouselHa;
+  bool carouselUsage, carouselRadar, carouselHa;
 
   // --- Shared HTTP / display ---
   uint16_t httpTimeout; // ms
@@ -169,7 +127,6 @@ struct Settings {
   uint8_t  rotation;          // 0..3 screen orientation
 
   // --- Feature slices ---
-  TickerSettings  ticker;
   UsageSettings   usage;
   RadarSettings   radar;
   HaSettings      ha;        // MQTT broker for HA screens

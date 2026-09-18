@@ -1,15 +1,12 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 
-// Deployed to GitHub Pages at https://giovi321.github.io/smalltv-mod/
 export default defineConfig({
-  site: 'https://giovi321.github.io',
-  base: '/smalltv-mod',
   integrations: [
     starlight({
       title: 'smalltv-mod',
       description:
-        'Open-source ESP8266 firmware for the GeekMagic SmallTV: ticker, Claude usage meter, plane radar, and Home Assistant screens.',
+        'Open-source ESP8266 firmware for the GeekMagic SmallTV: air-alert Radar, usage metrics, and Home Assistant screens.',
       logo: {
         src: './src/assets/logo.svg',
         replacesTitle: false,
@@ -46,9 +43,8 @@ export default defineConfig({
         {
           label: 'Features',
           items: [
-            { label: 'Stock and crypto ticker', link: '/features/ticker/' },
             { label: 'Claude usage meter', link: '/features/usage/' },
-            { label: 'Plane radar', link: '/features/radar/' },
+            { label: 'Air-alert Radar', link: '/features/radar/' },
             { label: 'Notifications', link: '/features/notify/' },
             { label: 'Home Assistant screens', link: '/features/ha/' },
           ],
@@ -57,7 +53,6 @@ export default defineConfig({
           label: 'Reference',
           items: [
             { label: 'Which release file to download', link: '/reference/release-assets/' },
-            { label: 'Data sources', link: '/reference/data-sources/' },
             { label: 'Building from source', link: '/reference/building/' },
             { label: 'Recovery and credits', link: '/reference/recovery/' },
           ],

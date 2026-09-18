@@ -1,6 +1,6 @@
 # smalltv-mod
 
-Custom firmware for the GeekMagic SmallTV with an ESP-12F / ESP8266 and a 1.54-inch 240x240 ST7789 display. It replaces the stock firmware with a stock/crypto ticker, Claude usage display, plane radar, Home Assistant MQTT screens, notifications, and a browser-based setup page.
+Custom firmware for the GeekMagic SmallTV with an ESP-12F / ESP8266 and a 1.54-inch 240x240 ST7789 display. It provides Ukraine air-alert Radar, Claude/Codex usage display, Home Assistant MQTT screens, notifications, and a browser-based setup page.
 
 ## Firmware files
 
@@ -16,7 +16,7 @@ Custom firmware for the GeekMagic SmallTV with an ESP-12F / ESP8266 and a 1.54-i
 2. Upload `smalltv-mod-firmware.bin`.
 3. Join `SmallTV-Setup`, then open `http://192.168.4.1` and save your WiFi settings.
 
-SmallTV-ultra uses the loader file first, then uploads the normal firmware at the loader page. Full guides are in [docs](https://giovi321.github.io/smalltv-mod/).
+SmallTV-ultra uses the loader file first, then uploads the normal firmware at the loader page.
 
 ## Build
 

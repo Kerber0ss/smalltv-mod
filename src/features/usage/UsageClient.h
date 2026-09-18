@@ -2,7 +2,7 @@
 //
 // The companion daemon (see daemon/) polls the Claude API rate-limit headers and
 // serves the latest snapshot as a tiny JSON object. The device GETs that URL on
-// its poll schedule — exactly like the stock webhook, but a different contract.
+// its configured poll schedule.
 #pragma once
 #include "Settings.h"
 #include "UsageData.h"

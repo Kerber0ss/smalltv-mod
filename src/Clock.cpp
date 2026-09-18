@@ -41,8 +41,8 @@ void clockBegin(const Settings& s) {
 void clockReapply(const Settings& s) {
   // SNTP only runs when something needs it. Starting the lwIP SNTP client is a
   // permanent mid-arena heap allocation, and on the memory-tight ESP8266 that can
-  // fragment the largest contiguous block below what the cash.ch TLS handshake
-  // needs (blanking those tickers). Arm on the first enable, re-arm on a
+  // fragment the largest contiguous block below what HTTPS requests need.
+  // Arm on the first enable, re-arm on a
   // timezone change, and otherwise leave it alone.
   if (!s.clock.nightEnabled) return;
   if (!s_ntpStarted || s.clock.tzPosix != s_armedTz) clockBegin(s);

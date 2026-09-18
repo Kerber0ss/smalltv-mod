@@ -1,8 +1,10 @@
 ---
-title: Plane radar
-description: Show nearby aircraft on the ESP8266 SmallTV.
+title: Air-alert Radar
+description: Regional air-alert status on the ESP8266 SmallTV.
 ---
 
-Set your latitude and longitude in the Radar tab, then select a range and refresh interval. The default `adsb.lol` feed works directly over HTTPS; a LAN webhook is the most reliable option when memory is tight.
+Set a Ukrainian region in the **Radar** tab. Optionally provide a district and city, then select whether the screen represents that locality or the whole region.
 
-The screen shows nearby aircraft as heading triangles, with optional vectors, labels, rim dots, altitude filtering, and airport markers. The Status tab reports the last radar stage when the screen is empty.
+The screen shows the selected place, green/yellow/red alert level, and drone and missile counts. It refreshes from `https://radar.syslog.pp.ua/v1/situation`; settings control the refresh interval.
+
+If the API is temporarily unavailable, the display keeps the last successful reading and retries instead of blocking the device.

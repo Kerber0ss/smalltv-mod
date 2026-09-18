@@ -75,7 +75,7 @@ bool usageApply(const String& body) {
   return applyUsageDoc(sourceFromDoc(doc) == USAGE_CODEX ? g_codex : g_claude, doc);
 }
 
-// ---- one HTTP(S) GET + parse (mirrors StockClient::fetchUrl) ----------------
+// ---- one HTTP(S) GET + parse -----------------------------------------------
 static bool fetchUsage(const Settings& s) {
   const String& url = s.usage.usageUrl;
   if (url.length() < 8) return false;

@@ -78,7 +78,7 @@ It scrolls at 100 px/s, which is 120 ms per character. A 90-character label is 1
 
 The overlay is not a mode. It cannot be selected in the Display tab and it never joins the carousel rotation; it simply pre-empts whatever is running, then hands back.
 
-Handing back is careful about the carousel. The time the overlay spent on screen is credited back to the rotation timer, so if the ticker had four seconds left when the alert arrived, it still has four seconds left afterwards, on the same symbol. That credit spans the whole run rather than the last request in it, so a queue that chained four overlays gives back all four. The underlying feature repaints from what it already had rather than re-fetching, so an alert costs no extra network traffic.
+Handing back is careful about the carousel. The time the overlay spent on screen is credited back to the rotation timer, so the interrupted screen keeps its remaining time afterwards. That credit spans the whole run rather than the last request in it, so a queue that chained four overlays gives back all four. The underlying feature repaints from cached data rather than re-fetching, so an alert costs no extra network traffic.
 
 Nothing about a notification is saved. There is no history, and a reboot leaves no trace of one — a queue included.
 
