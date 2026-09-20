@@ -5,7 +5,7 @@
 
 enum RadarStage : uint8_t {
   RADAR_IDLE = 0,
-  RADAR_NO_REGION,
+  RADAR_NO_LOCATION,
   RADAR_LOW_HEAP,
   RADAR_CONNECT_FAIL,
   RADAR_HTTP_ERROR,
@@ -14,7 +14,6 @@ enum RadarStage : uint8_t {
 };
 
 struct RadarSituation {
-  char     regionName[48];
   char     placeName[48];
   uint16_t drones;
   uint16_t missiles;       // cruise + ballistic missiles

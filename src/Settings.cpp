@@ -179,24 +179,18 @@ void HaSettings::fromJson(JsonObjectConst o) {
 void RadarSettings::setDefaults() {
   strlcpy(region, DEFAULT_RADAR_REGION, sizeof(region));
   district[0] = 0;
-  locality[0] = 0;
-  localScope = false;
   pollSec = DEFAULT_RADAR_POLL_SEC;
 }
 
 void RadarSettings::toJson(JsonObject o) const {
   o["region"]      = region;
   o["district"]    = district;
-  o["locality"]    = locality;
-  o["localScope"]  = localScope;
   o["pollSec"]     = pollSec;
 }
 
 void RadarSettings::fromJson(JsonObjectConst o) {
   if (o["region"].is<const char*>()) strlcpy(region, o["region"], sizeof(region));
   if (o["district"].is<const char*>()) strlcpy(district, o["district"], sizeof(district));
-  if (o["locality"].is<const char*>()) strlcpy(locality, o["locality"], sizeof(locality));
-  if (o["localScope"].is<bool>()) localScope = o["localScope"];
   if (o["pollSec"].is<int>()) pollSec = constrain((int)o["pollSec"], 10, 3600);
 }
 

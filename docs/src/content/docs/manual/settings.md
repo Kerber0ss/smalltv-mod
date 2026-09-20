@@ -7,4 +7,4 @@ The web UI has Status, WiFi, Display, Usage metrics, Radar, Home Assistant, and 
 
 **Display** selects Usage metrics, Radar, Home Assistant, or Carousel. Carousel rotates through checked screens.
 
-**Radar** selects region, optional district and city, local or region-wide scope, and refresh interval. **Usage metrics** configures its local data source. **Home Assistant** configures MQTT. **System** handles firmware updates and factory reset.
+**Radar** requires an oblast and district selected from fixed lists, plus a refresh interval. The display uses the district result only. **Usage metrics** configures its local data source. **Home Assistant** configures MQTT. **System** handles firmware updates and factory reset.

@@ -7,6 +7,6 @@ description: Connect the ESP8266 SmallTV to WiFi and open its settings page.
 2. Open `http://192.168.4.1` if the captive portal does not open.
 3. In **WiFi**, scan and save a 2.4 GHz network.
 4. After reboot, open the displayed IP address or `http://<hostname>.local`.
-5. In **Radar**, set the region and optional district or city, then save settings.
+5. In **Radar**, choose both the oblast and district from the lists, then save settings.
 
 The device saves up to four networks and falls back to its setup hotspot if none can be joined.

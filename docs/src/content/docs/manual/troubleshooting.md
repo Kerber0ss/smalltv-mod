@@ -13,7 +13,7 @@ Use a 2.4 GHz network. If the saved networks cannot be joined, connect to `Small
 
 ## Radar is empty
 
-The ESP8266 has limited heap for HTTPS. Check the Status tab for free heap and the Radar diagnostic, then verify that the selected region matches the API's region key.
+The ESP8266 has limited heap for HTTPS. Check the Status tab for free heap and the Radar diagnostic, then verify that both the selected oblast and district are set.
 
 ## Update failed
 

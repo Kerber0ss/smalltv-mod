@@ -169,22 +169,18 @@ small.hint{display:block;color:var(--mut);margin-top:4px;font-size:12px}
  <!-- RADAR (feature) -->
  <section id="radar" class="tab">
   <div class="card"><h2>Location</h2>
-   <label>Region</label>
-   <select id="radarRegion">
-    <option value="">Choose a region</option>
-    <option value="cherkaska">Cherkasy</option><option value="chernihivska">Chernihiv</option><option value="chernivetska">Chernivtsi</option><option value="crimea">Crimea</option><option value="dnipropetrovska">Dnipro</option><option value="donetska">Donetsk</option><option value="ivano-frankivska">Ivano-Frankivsk</option><option value="kharkivska">Kharkiv</option><option value="khersonska">Kherson</option><option value="khmelnytska">Khmelnytskyi</option><option value="kirovohradska">Kirovohrad</option><option value="kyiv-city">Kyiv city</option><option value="kyivska">Kyiv region</option><option value="luhanska">Luhansk</option><option value="lvivska">Lviv</option><option value="mykolaivska">Mykolaiv</option><option value="odeska">Odesa</option><option value="poltavska">Poltava</option><option value="rivnenska">Rivne</option><option value="sevastopol">Sevastopol</option><option value="sumska">Sumy</option><option value="ternopilska">Ternopil</option><option value="vinnytska">Vinnytsia</option><option value="volynska">Volyn</option><option value="zakarpatska">Zakarpattia</option><option value="zaporizka">Zaporizhzhia</option><option value="zhytomyrska">Zhytomyr</option>
+   <label>Oblast</label>
+   <select id="radarRegion" onchange="populateRadarDistricts('')">
+    <option value="">Choose an oblast</option>
+    <option value="cherkaska">Cherkasy</option><option value="chernihivska">Chernihiv</option><option value="chernivetska">Chernivtsi</option><option value="crimea">Crimea</option><option value="dnipropetrovska">Dnipro</option><option value="donetska">Donetsk</option><option value="ivano-frankivska">Ivano-Frankivsk</option><option value="kharkivska">Kharkiv</option><option value="khersonska">Kherson</option><option value="khmelnytska">Khmelnytskyi</option><option value="kirovohradska">Kirovohrad</option><option value="kyivska">Kyiv</option><option value="luhanska">Luhansk</option><option value="lvivska">Lviv</option><option value="mykolaivska">Mykolaiv</option><option value="odeska">Odesa</option><option value="poltavska">Poltava</option><option value="rivnenska">Rivne</option><option value="sumska">Sumy</option><option value="ternopilska">Ternopil</option><option value="vinnytska">Vinnytsia</option><option value="volynska">Volyn</option><option value="zakarpatska">Zakarpattia</option><option value="zaporizka">Zaporizhzhia</option><option value="zhytomyrska">Zhytomyr</option>
    </select>
-   <div class="row">
-    <div><label>District <span class="muted">(optional)</span></label><input id="radarDistrict" type="text" placeholder="Odeskyi raion"></div>
-    <div><label>City <span class="muted">(optional)</span></label><input id="radarLocality" type="text" placeholder="Odesa"></div>
-   </div>
-   <label>Display alerts and targets for</label>
-   <select id="radarScope"><option value="region">Whole region</option><option value="local">Selected district or city</option></select>
-   <small class="hint">For a district/city view, enter the place exactly as it appears in the Radar data. A regional alert stays red for every place; district-only alerts turn red only for the selected district.</small>
+   <label>District</label>
+   <select id="radarDistrict" disabled><option value="">Choose an oblast first</option></select>
+   <small class="hint">Choose both an oblast and a district. Radar requests both filters and the screen uses only that district’s alert level and target counts.</small>
   </div>
   <div class="card"><h2>Data</h2>
    <label>Refresh (seconds)</label><input id="radarPollSec" type="number" min="10" max="3600">
-   <small class="hint">Uses <code>radar.syslog.pp.ua</code> over HTTPS. The screen shows green when clear, yellow for live targets, and red for an official air alert. Drones and missiles remain visible in large type.</small>
+   <small class="hint">Uses <code>radar.syslog.pp.ua</code> over HTTPS. The screen color follows the selected district’s API level: green, yellow, or red. Drones and missiles remain visible in large type.</small>
   </div>
  </section>
 
@@ -299,6 +295,45 @@ var TZMAP={
 function fillTz(){var s=$('tz');if(!s)return;var keys=Object.keys(TZMAP).filter(function(k){return k!==''});
  keys.sort();s.innerHTML='<option value="">UTC</option>'+keys.map(function(k){return '<option value="'+k+'">'+k+'</option>'}).join('');}
 
+// Static post-2020 raion list for the 24 oblasts and Crimea. Values are the lowercase
+// NEPTUN raion keys; the API receives the selected oblast and this key.
+var RADAR_DISTRICTS={
+ crimea:['Бахчисарайський район','Білогірський район','Джанкойський район','Євпаторійський район','Керченський район','Курманський район','Перекопський район','Сімферопольський район','Феодосійський район','Ялтинський район'],
+ cherkaska:['Звенигородський район','Золотоніський район','Уманський район','Черкаський район'],
+ chernihivska:['Корюківський район','Ніжинський район','Новгород-Сіверський район','Прилуцький район','Чернігівський район'],
+ chernivetska:['Вижницький район','Дністровський район','Чернівецький район'],
+ dnipropetrovska:['Дніпровський район','Кам’янський район','Криворізький район','Нікопольський район','Павлоградський район','Самарівський район','Синельниківський район'],
+ donetska:['Бахмутський район','Волноваський район','Горлівський район','Донецький район','Кальміуський район','Краматорський район','Маріупольський район','Покровський район'],
+ 'ivano-frankivska':['Верховинський район','Івано-Франківський район','Калуський район','Коломийський район','Косівський район','Надвірнянський район'],
+ kharkivska:['Берестинський район','Богодухівський район','Ізюмський район','Куп’янський район','Лозівський район','Харківський район','Чугуївський район'],
+ khersonska:['Бериславський район','Генічеський район','Каховський район','Скадовський район','Херсонський район'],
+ khmelnytska:['Кам’янець-Подільський район','Хмельницький район','Шепетівський район'],
+ kirovohradska:['Голованівський район','Кропивницький район','Новоукраїнський район','Олександрійський район'],
+ kyivska:['Білоцерківський район','Бориспільський район','Броварський район','Бучанський район','Вишгородський район','Обухівський район','Фастівський район'],
+ luhanska:['Алчевський район','Довжанський район','Луганський район','Ровеньківський район','Сватівський район','Старобільський район','Сєвєродонецький район','Щастинський район'],
+ lvivska:['Дрогобицький район','Золочівський район','Львівський район','Самбірський район','Стрийський район','Шептицький район','Яворівський район'],
+ mykolaivska:['Баштанський район','Вознесенський район','Миколаївський район','Первомайський район'],
+ odeska:['Березівський район','Білгород-Дністровський район','Болградський район','Ізмаїльський район','Одеський район','Подільський район','Роздільнянський район'],
+ poltavska:['Кременчуцький район','Лубенський район','Миргородський район','Полтавський район'],
+ rivnenska:['Вараський район','Дубенський район','Рівненський район','Сарненський район'],
+ sumska:['Конотопський район','Охтирський район','Роменський район','Сумський район','Шосткинський район'],
+ ternopilska:['Кременецький район','Тернопільський район','Чортківський район'],
+ vinnytska:['Вінницький район','Гайсинський район','Жмеринський район','Могилів-Подільський район','Тульчинський район','Хмільницький район'],
+ volynska:['Володимирський район','Камінь-Каширський район','Ковельський район','Луцький район'],
+ zakarpatska:['Берегівський район','Мукачівський район','Рахівський район','Тячівський район','Ужгородський район','Хустський район'],
+ zaporizka:['Бердянський район','Василівський район','Запорізький район','Мелітопольський район','Пологівський район'],
+ zhytomyrska:['Бердичівський район','Житомирський район','Звягельський район','Коростенський район']
+};
+function districtKey(name){return (name||'').toLowerCase().replace(/ район$/,'').replace(/[’'ʼ`]/g,'').trim()}
+function populateRadarDistricts(saved){var e=$('radarDistrict'),region=$('radarRegion').value;
+ if(!e)return; e.innerHTML=''; var first=document.createElement('option');first.value='';
+ var list=RADAR_DISTRICTS[region]||[];
+ first.textContent=region?'Choose a district':'Choose an oblast first';e.appendChild(first);
+ e.disabled=!region||!list.length;
+ list.forEach(function(name){var o=document.createElement('option');o.value=districtKey(name);o.textContent=name;e.appendChild(o)});
+ var wanted=districtKey(saved||'');
+ for(var i=1;i<e.options.length;i++)if(districtKey(e.options[i].value)===wanted||districtKey(e.options[i].textContent)===wanted){e.selectedIndex=i;break}
+}
 var MODEOPT={usage:'usage',radar:'radar',ha:'ha'};
 var CAROPT={usage:'carouselUsage',radar:'carouselRadar',ha:'carouselHa'};
 function hideFeat(name){
@@ -362,8 +397,7 @@ function loadConfig(){return j('/api/config').then(function(c){C=c;
  sc('codexEnabled',!!u.codexEnabled);
  // radar slice
  var r=c.radar||{};
- sv('radarRegion',r.region||''); sv('radarDistrict',r.district||''); sv('radarLocality',r.locality||'');
- sv('radarScope',r.localScope?'local':'region');
+ sv('radarRegion',r.region||''); populateRadarDistricts(r.district||'');
  sv('radarPollSec',r.pollSec);
  var au=c.auth||{};
  sc('authEnabled',!!au.enabled); sv('authUser',au.user||'admin');
@@ -410,8 +444,8 @@ function collect(){
   nightEnd:gv('nightEnd')||'07:00',nightLevel:parseInt(gv('nightLevel'))||0};}
  // radar slice
  if($('radar')){
-  o.radar={region:gv('radarRegion'),district:gv('radarDistrict').trim(),locality:gv('radarLocality').trim(),
-   localScope:gv('radarScope')==='local',pollSec:parseInt(gv('radarPollSec'))||30};
+  o.radar={region:gv('radarRegion'),district:gv('radarDistrict').trim(),
+   pollSec:parseInt(gv('radarPollSec'))||30};
  }
  return o;
 }

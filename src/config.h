@@ -163,8 +163,8 @@
 #define USAGE_STALE_GRACE_MS  20000UL
 
 // ---------------------------------------------------------------------------
-// Air-alert radar (MODE_RADAR). The API is region-filtered before it reaches
-// the ESP8266; only the selected region's situation is parsed from its stream.
+// Air-alert radar (MODE_RADAR). The API filters by both region and district;
+// the ESP8266 parses only the selected district's alert level and counters.
 // ---------------------------------------------------------------------------
 #define RADAR_API_URL          "https://radar.syslog.pp.ua/v1/situation?region="
 #define RADAR_TLS_RXBUF        4096

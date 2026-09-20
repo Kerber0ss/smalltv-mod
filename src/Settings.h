@@ -91,9 +91,7 @@ struct HaSettings {
 // ---- Air-alert radar feature slice ----------------------------------------
 struct RadarSettings {
   char     region[MAX_RADAR_REGION_LEN];      // API region key, empty = not configured
-  char     district[MAX_RADAR_LOCATION_LEN];  // optional district name
-  char     locality[MAX_RADAR_LOCATION_LEN];  // optional city/locality name
-  bool     localScope;                        // false = whole region; true = selected place
+  char     district[MAX_RADAR_LOCATION_LEN];  // required API district key
   uint16_t pollSec;                           // refresh period
 
   void setDefaults();

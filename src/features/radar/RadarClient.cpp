@@ -18,7 +18,7 @@ uint32_t radarLastTryMs() { return g_lastTryMs; }
 
 const char* radarStageName() {
   switch (g_stage) {
-    case RADAR_NO_REGION: return "choose a region";
+    case RADAR_NO_LOCATION: return "choose oblast and district";
     case RADAR_LOW_HEAP: return "skipped, low heap";
     case RADAR_CONNECT_FAIL: return "connect failed";
     case RADAR_HTTP_ERROR: return "http error";
@@ -40,76 +40,35 @@ void radarInit(const Settings& s) {
 
 void radarForceRefresh() { g_nextPollMs = millis(); }
 
-static bool samePlace(const char* wanted, const char* actual) {
-  return wanted[0] && actual && !strcmp(wanted, actual);
-}
-
-static uint16_t addCount(uint16_t total, JsonObjectConst t) {
-  int n = t["count"] | 1;
-  if (n < 1) n = 1;
-  uint32_t sum = (uint32_t)total + (uint32_t)n;
-  return sum > 65535U ? 65535U : (uint16_t)sum;
-}
-
 static bool parseSituation(const Settings& s, Stream& stream) {
-  // Filter every field not used by the 240px display. Keeping only target type,
-  // place and group size bounds the temporary JSON tree on the ESP8266.
+  // The service returns area and selected-district status separately. Keep
+  // only the selected district fields needed by the display on the ESP8266.
   JsonDocument filter;
-  JsonObject r = filter["region"].to<JsonObject>();
-  r["name"] = true;
-  r["level"] = true;
-  r["counts"]["uav"] = true;
-  r["counts"]["missile"] = true;
-  r["counts"]["ballistic"] = true;
-  JsonObject raion = r["raions_under_alert"][0].to<JsonObject>();
-  raion["name"] = true;
-  JsonObject threat = r["threats"][0].to<JsonObject>();
-  threat["type"] = true;
-  threat["district"] = true;
-  threat["locality"] = true;
-  threat["count"] = true;
+  JsonObject districtFilter = filter["district"].to<JsonObject>();
+  districtFilter["name"] = true;
+  districtFilter["level"] = true;
+  districtFilter["counts"]["uav"] = true;
+  districtFilter["counts"]["missile"] = true;
+  districtFilter["counts"]["ballistic"] = true;
 
   JsonDocument doc;
   if (deserializeJson(doc, stream, DeserializationOption::Filter(filter))) {
     g_stage = RADAR_PARSE_FAIL;
     return false;
   }
-  JsonObjectConst region = doc["region"].as<JsonObjectConst>();
-  if (region.isNull()) { g_stage = RADAR_PARSE_FAIL; return false; }
+  JsonObjectConst district = doc["district"].as<JsonObjectConst>();
+  if (district.isNull()) { g_stage = RADAR_PARSE_FAIL; return false; }
 
   RadarSituation next{};
-  strlcpy(next.regionName, region["name"] | s.radar.region, sizeof(next.regionName));
-  const bool local = s.radar.localScope && (s.radar.locality[0] || s.radar.district[0]);
-  const char* wanted = s.radar.locality[0] ? s.radar.locality : s.radar.district;
-  strlcpy(next.placeName, local ? wanted : next.regionName, sizeof(next.placeName));
-
-  JsonArrayConst raions = region["raions_under_alert"].as<JsonArrayConst>();
-  const char* apiLevel = region["level"] | "green";
-  bool regionalAlert = !strcmp(apiLevel, "red") && raions.size() == 0;
-  bool localAlert = regionalAlert;
-  if (local && !regionalAlert && s.radar.district[0]) {
-    for (JsonObjectConst raion : raions)
-      if (samePlace(s.radar.district, raion["name"] | "")) { localAlert = true; break; }
-  }
-
-  uint16_t localThreats = 0;
-  for (JsonObjectConst t : region["threats"].as<JsonArrayConst>()) {
-    if (local && !samePlace(wanted, s.radar.locality[0] ? (t["locality"] | "")
-                                                      : (t["district"] | ""))) continue;
-    const char* type = t["type"] | "";
-    if (!strcmp(type, "uav")) next.drones = addCount(next.drones, t);
-    if (!strcmp(type, "missile") || !strcmp(type, "ballistic")) next.missiles = addCount(next.missiles, t);
-    localThreats = addCount(localThreats, t);
-  }
-
-  if (!local) {
-    next.drones = region["counts"]["uav"] | 0;
-    next.missiles = (uint16_t)((region["counts"]["missile"] | 0) +
-                               (region["counts"]["ballistic"] | 0));
-    next.level = !strcmp(apiLevel, "red") ? 2 : !strcmp(apiLevel, "yellow") ? 1 : 0;
-  } else {
-    next.level = localAlert ? 2 : localThreats ? 1 : 0;
-  }
+  strlcpy(next.placeName, district["name"] | s.radar.district, sizeof(next.placeName));
+  const char* apiLevel = district["level"] | "";
+  if (!strcmp(apiLevel, "red")) next.level = 2;
+  else if (!strcmp(apiLevel, "yellow")) next.level = 1;
+  else if (!strcmp(apiLevel, "green")) next.level = 0;
+  else { g_stage = RADAR_PARSE_FAIL; return false; }
+  next.drones = district["counts"]["uav"] | 0;
+  next.missiles = (uint16_t)((district["counts"]["missile"] | 0) +
+                             (district["counts"]["ballistic"] | 0));
   next.valid = true;
   g_data = next;
   g_lastOkMs = millis();
@@ -128,7 +87,25 @@ static bool fetch(const Settings& s) {
   http.useHTTP10(true);                 // stream raw JSON, never chunk framing
   http.setTimeout(s.httpTimeout);
   http.setReuse(false);
-  String url = String(F(RADAR_API_URL)) + s.radar.region;
+  String url = String(F(RADAR_API_URL));
+  url.reserve(url.length() + strlen(s.radar.region) + strlen(s.radar.district) * 3 + 12);
+  const char hex[] = "0123456789ABCDEF";
+  auto addQueryValue = [&](const char* value) {
+    for (const unsigned char* p = (const unsigned char*)value; *p; ++p) {
+      const unsigned char c = *p;
+      if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+          (c >= '0' && c <= '9') || c == '-' || c == '_' || c == '.' || c == '~') {
+        url += (char)c;
+      } else {
+        url += '%';
+        url += hex[c >> 4];
+        url += hex[c & 0x0F];
+      }
+    }
+  };
+  addQueryValue(s.radar.region);
+  url += F("&district=");
+  addQueryValue(s.radar.district);
   if (!http.begin(*client, url)) { g_stage = RADAR_CONNECT_FAIL; return false; }
   http.addHeader("Accept", "application/json");
   http.setUserAgent(F("SmallTV radar"));
@@ -145,7 +122,7 @@ static bool fetch(const Settings& s) {
 }
 
 void radarService(const Settings& s) {
-  if (!s.radar.region[0]) { g_stage = RADAR_NO_REGION; return; }
+  if (!s.radar.region[0] || !s.radar.district[0]) { g_stage = RADAR_NO_LOCATION; return; }
   if ((int32_t)(millis() - g_nextPollMs) < 0) return;
   g_nextPollMs = millis() + (uint32_t)s.radar.pollSec * 1000UL;
   g_lastTryMs = millis();

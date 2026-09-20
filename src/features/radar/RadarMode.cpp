@@ -46,7 +46,10 @@ void RadarMode::invalidate(const Settings& s) {
 }
 
 void RadarMode::render(const Settings& s) {
-  if (!s.radar.region[0]) { gfxMessage("AIR ALERTS", "Choose a region", C_YELLOW); return; }
+  if (!s.radar.region[0] || !s.radar.district[0]) {
+    gfxMessage("AIR ALERTS", "Choose oblast & district", C_YELLOW);
+    return;
+  }
   const RadarSituation& d = radarSituation();
   if (!d.valid) { gfxMessage("AIR ALERTS", radarStageName(), C_YELLOW); return; }
   Arduino_GFX* g = gfxDev();
